@@ -1,0 +1,240 @@
+
+#include <algorithm>
+#include <assert.h>
+#include <iostream>
+#include <string.h>
+#include <limits>
+
+#include "vecn.h"
+
+using namespace std;
+
+template <typename T, u_int n>
+CVector<T,n>::CVector() {
+
+    fill_n(m_data,n,0);
+
+}
+
+template <typename T, u_int n>
+CVector<T,n>::CVector(T val) {
+
+    fill_n(m_data,n,val);
+
+}
+
+template <typename T, u_int n>
+CVector<T,n>::CVector(initializer_list<T> list) {
+
+    u_int i = 0;
+
+    for(auto it = list.begin(); it!=list.end(); i++, it++)
+        m_data[i] = *it;
+
+}
+
+template<typename T, u_int n>
+bool CVector<T,n>::IsZero() const {
+
+    for(u_int i=0; i<n; i++) {
+
+        if(m_data[i])
+            return false;
+
+    }
+
+    return true;
+
+}
+
+
+template <typename T, u_int n>
+T& CVector<T,n>::operator ()(u_int i) {
+
+    assert(i<n);
+
+    return m_data[i];
+
+}
+
+template <typename T,u_int n>
+void CVector<T,n>::operator +=(const CVector<T,n>& x) {
+
+    for(u_int i=0; i<n; i++)
+        m_data[i] += x.m_data[i];
+
+}
+
+template <typename T,u_int n>
+void CVector<T,n>::operator*=(const CVector<T,n>& x) {
+
+    for(u_int i=0; i<n; i++)
+        m_data[i] *= x.m_data[i];
+
+}
+
+template <typename T, u_int n>
+T CVector<T,n>::Get(u_int i) const {
+
+    assert(i<n);
+
+    return m_data[i];
+
+}
+
+template <typename T, u_int n>
+double CVector<T,n>::Norm(double p) const {
+
+    assert(p>0);
+
+    double norm = 0;
+
+    for(u_int i=0; i<n; i++)
+        norm += pow(fabs((double)m_data[i]),p);
+
+    return pow(norm,1/p);
+
+}
+
+
+template <typename T, u_int n>
+double CVector<T,n>::Norm2() const {
+
+    double norm = 0;
+
+    for(u_int i=0; i<n; i++)
+        norm += (double)m_data[i]*(double)m_data[i];
+
+    return sqrt(norm);
+
+}
+
+
+template <typename T, u_int n>
+CVector<T,n> CVector<T,n>::Abs() const {
+
+    CVector<T,n> result;
+
+    for(u_int i=0; i<n; i++)
+        result(i) = (T)fabs(this->Get(i));
+
+    return result;
+
+}
+
+template<typename T,u_int n>
+bool CVector<T,n>::Normalize() {
+
+    double norm = Norm2();
+
+    T normc = (T)norm;
+
+    if(norm>0) {
+
+        for(u_int i=0; i<n; i++)
+            m_data[i] /= normc;
+
+        return 0;
+
+    }
+
+    return 1;
+
+}
+
+template<typename T,u_int n>
+T CVector<T,n>::Max() {
+
+    T max = std::numeric_limits<T>::min();
+
+    for(u_int i=0; i<n; i++) {
+
+        if(m_data[i]>max)
+            max = m_data[i];
+
+    }
+
+    return max;
+
+}
+
+template <class U, u_int m>
+ostream& operator << (ostream& os, const CVector<U,m>& x) {
+
+    os << " [ ";
+
+    for(u_int i=0; i<m-1; i++)
+        os << (float)x.Get(i) << " ";
+
+    os << (float)x.Get(m-1) << " ] ";
+
+    return os;
+
+}
+
+template <class U, u_int m>
+istream& operator >> (istream& is, CVector<U,m>& x) {
+
+    for(u_int i=0; i<m; i++)
+        is >> x(i);
+
+    return is;
+
+}
+
+template class CVector<float,3>;
+template class CVector<double,3>;
+template class CVector<unsigned char,3>;
+template class CVector<float,2>;
+template class CVector<double,2>;
+template class CVector<unsigned char,2>;
+template class CVector<size_t,3>;
+template class CVector<size_t,2>;
+template class CVector<int,2>;
+template class CVector<short,2>;
+template class CVector<float,6>;
+template class CVector<double,6>;
+
+#ifdef HAVE_EXR
+template class CVector<half,3>;
+#endif
+
+template ostream& operator << (ostream& os, const CVector<float,3>& x);
+template ostream& operator << (ostream& os, const CVector<double,3>& x);
+template ostream& operator << (ostream& os, const CVector<unsigned char,3>& x);
+template ostream& operator << (ostream& os, const CVector<float,2>& x);
+template ostream& operator << (ostream& os, const CVector<double,2>& x);
+template ostream& operator << (ostream& os, const CVector<unsigned char,2>& x);
+template ostream& operator << (ostream& os, const CVector<int,2>& x);
+template ostream& operator << (ostream& os, const CVector<short,2>& x);
+template istream& operator >> (istream& is, CVector<float,3>& x);
+template istream& operator >> (istream& is, CVector<double,3>& x);
+template istream& operator >> (istream& is, CVector<unsigned char,3>& x);
+template istream& operator >> (istream& is, CVector<float,2>& x);
+template istream& operator >> (istream& is, CVector<double,2>& x);
+template istream& operator >> (istream& is, CVector<unsigned char,2>& x);
+
+
+template<typename T,u_int n,typename U>
+CVector<T,n> operator*(const U& s, const CVector<T,n>& x) {
+
+    CVector<T,n> result;
+
+    for(u_int i=0; i<n; i++)
+        result(i) = x.Get(i)*(T)s;
+
+    return result;
+
+}
+
+template CVector<double,3> operator*(const float& s, const CVector<double,3>& x);
+template CVector<double,3> operator*(const double& s, const CVector<double,3>& x);
+template CVector<float,3> operator*(const float& s, const CVector<float,3>& x);
+template CVector<float,3> operator*(const double& s, const CVector<float,3>& x);
+template CVector<double,2> operator*(const float& s, const CVector<double,2>& x);
+template CVector<double,2> operator*(const double& s, const CVector<double,2>& x);
+template CVector<float,2> operator*(const float& s, const CVector<float,2>& x);
+template CVector<float,2> operator*(const double& s, const CVector<float,2>& x);
+
+template CVector<unsigned char,3> operator*(const float& s, const CVector<unsigned char,3>& x);
+template CVector<unsigned char,3> operator*(const double& s, const CVector<unsigned char,3>& x);
