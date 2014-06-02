@@ -13,7 +13,7 @@ typedef OpenMesh::TriMesh_ArrayKernelT<OpenMesh::Subdivider::Adaptive::Composite
 
 #include "linalg.h"
 #include "cam.h"
-
+#include "bbox.h"
 
 /*! \brief triangle mesh
  *
@@ -86,7 +86,7 @@ public:
     vec3f Normal(FaceHandle vh) const;
 
     //! Computes the bounding box of the mesh.
-    void BoundingBox(vec3f& lower, vec3f& upper) const;
+    CBoundingBox<float> BoundingBox() const;
 
     //! Average edge length.
     float MeanEdgeLength();
@@ -98,7 +98,7 @@ public:
     OpenMesh::HalfedgeHandle OppositeHalfedgeHandle(FaceHandle fh, VertexHandle vh);
 
     //! Computes the discrete gradient operator for vertex-based functions.
-    CCSCMatrix<float> ComputeGradientOperator();
+    CCSCMatrix<float,int> ComputeGradientOperator();
 
     //! Cotangent of the angle opposite to a half edge.
     float CotanOppositeAngle(HalfedgeHandle heh);

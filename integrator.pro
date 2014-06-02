@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     darray.cpp \
     types.cpp \
     trimesh.cpp \
-    viewer.cpp
+    viewer.cpp \
+    bbox.cpp
 
 HEADERS  += mainwindow.h \
     vecn.h \
@@ -29,7 +30,8 @@ HEADERS  += mainwindow.h \
     darray.h \
     types.h \
     trimesh.h \
-    viewer.h
+    viewer.h \
+    bbox.h
 
 FORMS    += mainwindow.ui
 

@@ -562,9 +562,9 @@ void CTriangleMesh::SimpleSmooth(u_int n, bool boundary) {
 
 }
 
-CCSCMatrix<float> CTriangleMesh::ComputeGradientOperator() {
+CCSCMatrix<float,int> CTriangleMesh::ComputeGradientOperator() {
 
-    /*nabla = smatf(3*this->n_faces(),this->n_vertices());
+    vector<CCSCTriple<float,int> > entries;
 
     // row pointer
     size_t row = 0;
@@ -591,7 +591,7 @@ CCSCMatrix<float> CTriangleMesh::ComputeGradientOperator() {
                 size_t col = fv_it.handle().idx();
 
                 for(uint i=0; i<3; i++)
-                    nabla.Set(row+i,col,grad[i]);
+                    entries.push_back(CCSCTriple<float,int>(row+i,col,grad[i]));
 
             }
 
@@ -599,9 +599,9 @@ CCSCMatrix<float> CTriangleMesh::ComputeGradientOperator() {
 
         row += 3;
 
-    }*/
+    }
 
-    return CCSCMatrix<float>();
+    return CCSCMatrix<float,int>(3*this->n_faces(),this->n_vertices(),entries);
 
 }
 
@@ -631,7 +631,9 @@ vec3f CTriangleMesh::Normal(FaceHandle fh) const {
 
 }
 
-void CTriangleMesh::BoundingBox(vec3f& lower, vec3f& upper) const {
+CBoundingBox<float> CTriangleMesh::BoundingBox() const {
+
+    vec3f lower, upper;
 
     for(u_int i=0; i<3; i++) {
 
@@ -657,6 +659,8 @@ void CTriangleMesh::BoundingBox(vec3f& lower, vec3f& upper) const {
         }
 
     }
+
+    return CBoundingBox<float>(lower,upper);
 
 }
 

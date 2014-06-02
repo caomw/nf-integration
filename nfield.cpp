@@ -143,7 +143,7 @@ void CNormalField<float>::ReadFromFile(const char* filename) {
 
         m_viewpoint = CViewPoint<float>(trafo);
 
-        m_cam = CPinholeCam<float>(width,height,K[0][0],K[1][1],K[0][2],K[1][2]);
+        m_cam = CCamera<float>(width,height,K[0][0],K[1][1],K[0][2],K[1][2]);
 
     }
     else

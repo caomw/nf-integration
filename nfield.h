@@ -59,9 +59,15 @@ public:
     //! Project to image and compute value using bilinear interpolation.
     virtual CVector<T,3> Get(const CVector<T,3>& x);
 
+    //! Access to camera.
+    const CCamera<T>& GetCam() { return m_cam; }
+
+    //! Access to vantage point.
+    const CViewPoint<T>& GetViewpoint() { return m_viewpoint; }
+
 protected:
 
-    CPinholeCam<T> m_cam;
+    CCamera<T> m_cam;
     CViewPoint<T> m_viewpoint;
     CRawData<T> m_raw_data;
     CDenseArray<uint> m_mask;

@@ -8,7 +8,7 @@
 using namespace std;
 
 template<typename T>
-CPinholeCam<T>::CPinholeCam() {
+CCamera<T>::CCamera() {
 
     fill_n(m_size,2,0);
     fill_n(m_f,2,0);
@@ -19,7 +19,7 @@ CPinholeCam<T>::CPinholeCam() {
 }
 
 template<typename T>
-CPinholeCam<T>::CPinholeCam(T fu, T fv, T cu, T cv) {
+CCamera<T>::CCamera(T fu, T fv, T cu, T cv) {
 
     fill_n(m_size,2,0);
     m_f[0] = fu;
@@ -32,7 +32,7 @@ CPinholeCam<T>::CPinholeCam(T fu, T fv, T cu, T cv) {
 }
 
 template<typename T>
-CPinholeCam<T>::CPinholeCam(size_t w, size_t h, T fu, T fv, T cu, T cv) {
+CCamera<T>::CCamera(size_t w, size_t h, T fu, T fv, T cu, T cv) {
 
     m_size[0] = w;
     m_size[1] = h;
@@ -46,7 +46,7 @@ CPinholeCam<T>::CPinholeCam(size_t w, size_t h, T fu, T fv, T cu, T cv) {
 }
 
 template<typename T>
-CPinholeCam<T>::CPinholeCam(size_t w, size_t h) {
+CCamera<T>::CCamera(size_t w, size_t h) {
 
     m_size[0] = w;
     m_size[1] = h;
@@ -63,7 +63,7 @@ CPinholeCam<T>::CPinholeCam(size_t w, size_t h) {
 }
 
 template<typename T>
-CVector<T,2> CPinholeCam<T>::Project(const CVector<T,3>& x) const {
+CVector<T,2> CCamera<T>::Project(const CVector<T,3>& x) const {
 
     CVector<T,2> xn = { x.Get(0)/x.Get(2), x.Get(1)/x.Get(2) };
 
@@ -87,7 +87,7 @@ CVector<T,2> CPinholeCam<T>::Project(const CVector<T,3>& x) const {
 }
 
 template<typename T>
-void CPinholeCam<T>::Project(const CVector<T,3>& x, CVector<T,2>& u, CDenseArray<T>& J) const {
+void CCamera<T>::Project(const CVector<T,3>& x, CVector<T,2>& u, CDenseArray<T>& J) const {
 
     u = Project(x);
 
@@ -99,7 +99,7 @@ void CPinholeCam<T>::Project(const CVector<T,3>& x, CVector<T,2>& u, CDenseArray
 }
 
 template<typename T>
-CVector<T,2> CPinholeCam<T>::Flow(const CVector<T,3>& x, const CVector<T,3>& dx) const {
+CVector<T,2> CCamera<T>::Flow(const CVector<T,3>& x, const CVector<T,3>& dx) const {
 
     CVector<T,2> u = Project(x);
 
@@ -115,7 +115,7 @@ CVector<T,2> CPinholeCam<T>::Flow(const CVector<T,3>& x, const CVector<T,3>& dx)
 }
 
 template<typename T>
-CVector<T,3> CPinholeCam<T>::Normalize(const CVector<T,2>& u) const {
+CVector<T,3> CCamera<T>::Normalize(const CVector<T,2>& u) const {
 
     // FIXME: add undistortion
     CVector<T,3> x;
@@ -128,7 +128,7 @@ CVector<T,3> CPinholeCam<T>::Normalize(const CVector<T,2>& u) const {
 }
 
 template<typename U>
-ostream& operator<< (ostream& os, const CPinholeCam<U>& x) {
+ostream& operator<< (ostream& os, const CCamera<U>& x) {
 
     os << "# dims" << endl;
     os << x.m_size[0] << " " << x.m_size[1] << endl;
@@ -145,11 +145,11 @@ ostream& operator<< (ostream& os, const CPinholeCam<U>& x) {
 
 }
 
-template ostream& operator <<(ostream&, const CPinholeCam<float>& x);
-template ostream& operator <<(ostream&, const CPinholeCam<double>& x);
+template ostream& operator <<(ostream&, const CCamera<float>& x);
+template ostream& operator <<(ostream&, const CCamera<double>& x);
 
 template<typename U>
-istream& operator >> (istream& is, CPinholeCam<U>& x) {
+istream& operator >> (istream& is, CCamera<U>& x) {
 
     string linebuffer;
 
@@ -189,7 +189,7 @@ istream& operator >> (istream& is, CPinholeCam<U>& x) {
 }
 
 template<typename T>
-bool CPinholeCam<T>::operator==(const CPinholeCam<T>& cam) {
+bool CCamera<T>::operator==(const CCamera<T>& cam) {
 
     bool result = (m_size[0]==cam.m_size[0] &&
                    m_size[1]==cam.m_size[1] &&
@@ -208,7 +208,7 @@ bool CPinholeCam<T>::operator==(const CPinholeCam<T>& cam) {
 }
 
 template<typename T>
-CDenseArray<T> CPinholeCam<T>::GetProjectionMatrix() const {
+CDenseArray<T> CCamera<T>::GetProjectionMatrix() const {
 
     CDenseArray<T> P(3,3);
 
@@ -223,7 +223,7 @@ CDenseArray<T> CPinholeCam<T>::GetProjectionMatrix() const {
 }
 
 template<typename T>
-CDenseArray<T> CPinholeCam<T>::GetOpenGLProjectionMatrix(T znear, T zfar) const {
+CDenseArray<T> CCamera<T>::GetOpenGLProjectionMatrix(T znear, T zfar) const {
 
     CDenseArray<T> P(4,4);
 
@@ -239,8 +239,8 @@ CDenseArray<T> CPinholeCam<T>::GetOpenGLProjectionMatrix(T znear, T zfar) const 
 
 }
 
-template class CPinholeCam<float>;
-template class CPinholeCam<double>;
+template class CCamera<float>;
+template class CCamera<double>;
 
 template<typename T>
 CViewPoint<T>::CViewPoint():

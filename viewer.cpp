@@ -7,7 +7,28 @@
 
 using namespace std;
 
-CViewer::CViewer(const CPinholeCam<float>& cam, QWidget* parent):
+CViewer::CViewer(QWidget* parent):
+    QGLWidget(parent),
+    m_cam(),
+    m_viewpoint(),
+    m_znear(0.1),
+    m_zfar(100.0),
+    m_last_point(),
+    m_center(),
+    m_bbox(),
+    m_show_color(true) {
+
+    // set up window size according to resolution of camera
+    CVector<size_t,2> sizes = m_cam.GetSize();
+    this->setFixedSize(sizes.Get(0),sizes.Get(1));
+
+    // set cursor type and window title
+    setCursor(Qt::PointingHandCursor);
+    setWindowTitle("OpenGL Viewer");
+
+}
+
+CViewer::CViewer(const CCamera<float>& cam, QWidget* parent):
     QGLWidget(parent),
     m_cam(cam),
     m_viewpoint(),
@@ -15,16 +36,29 @@ CViewer::CViewer(const CPinholeCam<float>& cam, QWidget* parent):
     m_zfar(100.0),
     m_last_point(),
     m_center(),
-    //m_bbox(),
+    m_bbox(),
     m_show_color(true) {
 
     // set up window size according to resolution of camera
     CVector<size_t,2> sizes = m_cam.GetSize();
-    setFixedSize(sizes.Get(0),sizes.Get(1));
+    this->setFixedSize(sizes.Get(0),sizes.Get(1));
 
     // set cursor type and window title
     setCursor(Qt::PointingHandCursor);
     setWindowTitle("OpenGL Viewer");
+
+}
+
+void CViewer::updateCam(const CCamera<float>& cam) {
+
+    m_cam = cam;
+
+    CVector<size_t,2> sizes = m_cam.GetSize();
+    this->setFixedSize(sizes.Get(0),sizes.Get(1));
+
+    loadProjectionMatrix();
+
+    this->updateGL();
 
 }
 
@@ -155,8 +189,8 @@ void CViewer::wheelEvent(QWheelEvent* event) {
     CVector<float,3> dt = { 0, 0, 0.01f * (m_zfar - m_znear) * d };
     m_viewpoint.DifferentialTranslate(dt);
 
-    loadView(m_viewpoint.GetTransformation());
-    updateGL();
+    this->loadView(m_viewpoint.GetTransformation());
+    this->updateGL();
 
     event->accept();
 
@@ -179,14 +213,14 @@ void CViewer::mouseMoveEvent(QMouseEvent* event) {
     if (event->buttons()==Qt::MidButton) {
 
         // need depth here to backproject image plane translations (take mean of clipping depths)
-        CVector<float,3> dt = { -0.0005*(m_zfar-m_znear)*dx, -0.0005*(m_zfar-m_znear)*dy, 0 };
+        CVector<float,3> dt = { -0.0005f*(m_zfar-m_znear)*dx, -0.0005f*(m_zfar-m_znear)*dy, 0.0f };
         m_viewpoint.DifferentialTranslate(dt);
 
     }
     else if (event->buttons() == Qt::LeftButton)
     {
 
-        CVector<float,3> axis = { -0.05*dy, 0.05*dx, 0 };
+        CVector<float,3> axis = { -0.05f*dy, 0.05f*dx, 0 };
 
         // transform rotation axis into world coordinates
         const CRigidMotion<float,3> Finv = m_viewpoint.GetInverseTransformation();
@@ -208,8 +242,8 @@ void CViewer::mouseMoveEvent(QMouseEvent* event) {
 
     }
 
-    loadView(m_viewpoint.GetTransformation());
-    updateGL();
+    this->loadView(m_viewpoint.GetTransformation());
+    this->updateGL();
 
     // remember this point
     m_last_point = newpoint;
@@ -224,19 +258,19 @@ void CViewer::keyPressEvent(QKeyEvent* event) {
     if(event->key() == Qt::Key_Z) {
 
         CRigidMotion<float,3> id;
-        loadView(id);
+        this->loadView(id);
 
-        updateGL();
+        this->updateGL();
 
     }
 
     if(event->key() == Qt::Key_B) {
 
-        updateBoundingBox();
+        this->updateBoundingBox();
 
-        //m_center = m_bbox.Barycenter();
+        m_center = m_bbox.Barycenter();
 
-        updateGL();
+        this->updateGL();
 
     }
 
@@ -245,7 +279,7 @@ void CViewer::keyPressEvent(QKeyEvent* event) {
 
         m_show_color = !m_show_color;
 
-        updateGL();
+        this->updateGL();
 
     }
 
@@ -254,9 +288,9 @@ void CViewer::keyPressEvent(QKeyEvent* event) {
 CDenseArray<float> CViewer::getDepthMap(const CRigidMotion<float,3>& viewpoint) {
 
     // load view and paint
-    loadView(viewpoint);
-    updateClipDepth(viewpoint,1.0);
-    paintGL();
+    this->loadView(viewpoint);
+    this->updateClipDepth(viewpoint,1.0);
+    this->paintGL();
 
     // allocate result
     QSize ws = this->size();
@@ -290,21 +324,21 @@ CDenseArray<float> CViewer::getDepthMap(const CRigidMotion<float,3>& viewpoint) 
     delete [] buffer;
 
     // restore view and repaint
-    loadView(m_viewpoint.GetTransformation());
-    updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
-    paintGL();
+    this->loadView(m_viewpoint.GetTransformation());
+    this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
+    this->paintGL();
 
     return z;
 
 }
 
 
-/*CTriMeshViewer::CTriMeshViewer(const CView<float>& view, const CTriangleMesh* mesh, QWidget* parent):
-    CViewer(view,parent),
+CTriMeshViewer::CTriMeshViewer(const CCamera<float>& cam, const CTriangleMesh* mesh, QWidget* parent):
+    CViewer(cam,parent),
     m_mesh(mesh) {
 
     if(m_mesh!=nullptr)
-        updateBoundingBox();
+        this->updateBoundingBox();
 
 }
 
@@ -313,7 +347,7 @@ void CTriMeshViewer::setMesh(const CTriangleMesh *mesh) {
     m_mesh = mesh;
 
     // update bounding box
-    updateBoundingBox();
+    this->updateBoundingBox();
 
 }
 
@@ -326,121 +360,27 @@ void CTriMeshViewer::updateBoundingBox() {
     m_bbox = m_mesh->BoundingBox();
 
     // update clip depths
-    updateClipDepth(m_view,NEAR_PLANE_TOL);
+    this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
 
 }
 
-CDenseArray<int> CTriMeshViewer::getFaceMap(const CView<float>& view) {
-
-    // allocate result
-    QSize ws = this->size();
-    CDenseArray<int> fm(ws.height(),ws.width());
-
-    if(m_mesh==nullptr)
-        return fm;
-
-    // turn lighting off and set clear color to black
-    glDisable(GL_LIGHTING);
-    glClearColor(0.0,0.0,0.0,1.0);
-
-    // load view
-    loadView(view);
-
-    // clear buffers
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // load mesh
-    TriangleMesh::ConstFaceIter f_it;
-    TriangleMesh::ConstFaceVertexIter fv_it;
-
-    //unsigned int counter = 1;
-
-    // draw it
-    glBegin(GL_TRIANGLES);
-
-    for (f_it=m_mesh->faces_begin(); f_it!=m_mesh->faces_end(); ++f_it) {
-
-        unsigned int id = f_it.handle().idx() + 1;
-
-        // take the last three bytes of the counter as the color
-        uchar* bytes = reinterpret_cast<uchar*>(&id);
-
-        // load color
-        glColor3ub(bytes[0],bytes[1],bytes[2]);
-
-        // draw vertices
-        fv_it = m_mesh->cfv_iter(f_it.handle());
-        glVertex3fv(&m_mesh->point(fv_it)[0]);
-        ++fv_it;
-        glVertex3fv( &m_mesh->point(fv_it)[0] );
-        ++fv_it;
-        glVertex3fv( &m_mesh->point(fv_it)[0] );
-
-    }
-
-    glEnd();
-
-    glFlush();
-
-    // need buffer in order to flip the image
-    uchar* buffer = new uchar[3*fm.NElems()];
-
-    glReadPixels(0, 0,fm.NCols(),fm.NRows(),GL_RGB,GL_UNSIGNED_BYTE,buffer);
-
-    for(size_t i=0; i<fm.NRows(); i++) {
-
-        for(size_t j=0; j<fm.NCols(); j++) {
-
-            // normalized depth
-            uchar* pbuffer = buffer + 3*((fm.NRows()-i-1)*fm.NCols() + j);
-
-            // concatenate the three bytes to an integer
-            unsigned int index = 0;
-            uchar* bytes = reinterpret_cast<uchar*>(&index);
-            bytes[0] = pbuffer[0];
-            bytes[1] = pbuffer[1];
-            bytes[2] = pbuffer[2];
-
-            // transform to camera coordinates
-            if(index>0)
-                fm(i,j) = index - 1;
-            else
-                fm(i,j) = -1;
-
-        }
-
-    }
-
-    // clean up
-    delete [] buffer;
-
-    // restore view and graphics display
-    glEnable(GL_LIGHTING);
-    glClearColor(0.1,0.1,0.1,1.0);
-    loadView(m_view);
-    paintGL();
-
-    return fm;
-
-}
-
-void CTriMeshViewer::updateView(const R4R::CView<float>& view) {
+void CTriMeshViewer::updateView(const CViewPoint<float>& viewpoint) {
 
     // set the member variable
-    m_view = view;
+    m_viewpoint = viewpoint;
 
     // send the view to the graphics card
-    loadView(view);
+    this->loadView(viewpoint.GetTransformation());
 
     // update clip depths
-    updateClipDepth(view);
+    this->updateClipDepth(viewpoint.GetTransformation());
 
     // render
-    updateGL();
+    this->updateGL();
 
 }
 
-void CTriMeshViewer::updateClipDepth(const CView<float>& view, float tolerance) {
+void CTriMeshViewer::updateClipDepth(const CRigidMotion<float,3>& F, float tolerance) {
 
     if(m_mesh==nullptr)
         return;
@@ -449,8 +389,6 @@ void CTriMeshViewer::updateClipDepth(const CView<float>& view, float tolerance) 
 
     float minz = std::numeric_limits<float>::max();
     float maxz = -std::numeric_limits<float>::max();
-
-    CRigidMotion<float,3> F = view.GetTransformation();
 
     for(u_int i=0; i<corners.size(); i++) {
 
@@ -483,16 +421,16 @@ void CTriMeshViewer::updateClipDepth(const CView<float>& view, float tolerance) 
         m_zfar = newfar;
 
     // send new projection matrix to graphics card
-    loadProjectionMatrix();
+    this->loadProjectionMatrix();
 
 }
 
 void CTriMeshViewer::mouseReleaseEvent(QMouseEvent *event) {
 
     // update clip depths only after change is done
-    this->updateClipDepth(m_view,NEAR_PLANE_TOL);
+    this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
 
-    updateGL();
+    this->updateGL();
 
     event->accept();
 
@@ -539,5 +477,5 @@ void CTriMeshViewer::paintGL() {
 
     glEnd();
 
-}*/
+}
 

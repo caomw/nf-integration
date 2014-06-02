@@ -9,19 +9,6 @@
 
 #include "darray.h"
 
-/* Cholmod wrapper class
- * member is structure
- * update of numeric values and right-hand side
- * MEMBERS: are headers!!!!!
- * setter:
- * SetMatrix(const CSymmetricCSCArray& )
- * SetRightHandSide(CDenseVector)
- *
- * Was ist mit reassembly? Lohnt sich ws nicht, da nur die Allokation gespart wird.
- * NORMALIZATION: Add columns of ONES to symmetric CSC matrix!!!
- * DenseVector -> Multiplication -> create a bigger vector for output!
- */
-
 /*!
  * \brief matrix-market CSC triple
  */
@@ -75,6 +62,9 @@ public:
 
     //! Constructor.
     CCSCMatrix(size_t m, size_t n);
+
+    //! Resize.
+    void Resize(size_t m, size_t n) { m_nrows = m; m_ncols = n; }
 
     /*! \brief Constructor which takes MatrixMarket triples as input.
      *

@@ -6,21 +6,22 @@
 
 using namespace std;
 
-// TO: mask in narray, normalization in matrix, matrix vec multiplication
-// alles zusammen!
+// Matrix-assembly in TriMesh
+// Load mesh and data
+// Construct viewer/
+//
+//
 //
 
 
-int main(int argc, char *argv[])
-{
-    //QApplication a(argc, argv);
-    //MainWindow w;
-    //w.show();
 
-    //return a.exec();
+int main(int argc, char *argv[]) {
 
-    CNormalField<float> nf;
-    nf.ReadFromFile("/home/jbalzer/Data/cavlec/bunny/l10.exr");
+    QApplication a(argc, argv);
+    MainWindow w;
+    w.show();
+
+    return a.exec();
 
 
 //    vector<CCSCTriple<double,int> > entries;

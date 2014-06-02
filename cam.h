@@ -6,27 +6,27 @@
 #include "trafo.h"
 #include "darray.h"
 
-/*! \brief pinhole camera
+/*! \brief linear/projective camera model
  *
- *
- *
+ * TODO: remove size parameter, it is in CRawData anyway
  */
 template<typename T=double>
-class CPinholeCam {
+class CCamera {
+
 
 public:
 
     //! Constructor.
-    CPinholeCam();
+    CCamera();
 
     //! Constructor.
-    CPinholeCam(size_t w, size_t h);
+    CCamera(size_t w, size_t h);
 
     //! Constructor.
-    CPinholeCam(T fu, T fv, T cu, T cv);
+    CCamera(T fu, T fv, T cu, T cv);
 
     //! Constructor.
-    CPinholeCam(size_t w, size_t h, T fu, T fv, T cu, T cv);
+    CCamera(size_t w, size_t h, T fu, T fv, T cu, T cv);
 
     /*! \brief Projects a point into the image plane.
      *
@@ -63,13 +63,13 @@ public:
     CVector<T,2> Flow(const CVector<T,3>& x, const CVector<T,3>& dx) const;
 
     //! Writes the camera parameters to a stream.
-    template<typename U> friend std::ostream& operator << (std::ostream& os, const CPinholeCam<U>& x);
+    template<typename U> friend std::ostream& operator << (std::ostream& os, const CCamera<U>& x);
 
     //! Reads the camera parameters from a stream.
-    template<typename U> friend std::istream& operator >> (std::istream& is, CPinholeCam<U>& x);
+    template<typename U> friend std::istream& operator >> (std::istream& is, CCamera<U>& x);
 
     //! Checks if two cameras are the same.
-    bool operator==(const CPinholeCam<T>& cam);
+    bool operator==(const CCamera<T>& cam);
 
     //! Access to image size.
     CVector<size_t,2> GetSize() const {  return { m_size[0], m_size[1] }; }
