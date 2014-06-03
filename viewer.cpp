@@ -11,8 +11,8 @@ CViewer::CViewer(QWidget* parent):
     QGLWidget(parent),
     m_cam(),
     m_viewpoint(),
-    m_znear(0.1),
-    m_zfar(100.0),
+    m_znear(0.001),
+    m_zfar(50.0),
     m_last_point(),
     m_center(),
     m_bbox(),
@@ -33,7 +33,7 @@ CViewer::CViewer(const CCamera<float>& cam, QWidget* parent):
     m_cam(cam),
     m_viewpoint(),
     m_znear(0.1),
-    m_zfar(100.0),
+    m_zfar(50.0),
     m_last_point(),
     m_center(),
     m_bbox(),
@@ -56,6 +56,8 @@ void CViewer::updateCam(const CCamera<float>& cam) {
     CVector<size_t,2> sizes = m_cam.GetSize();
     this->setFixedSize(sizes.Get(0),sizes.Get(1));
 
+    glViewport(0,0,sizes.Get(0),sizes.Get(1));
+
     loadProjectionMatrix();
 
     this->updateGL();
@@ -66,6 +68,8 @@ void CViewer::loadProjectionMatrix() {
 
     // get camera intrinsics
     matf K = m_cam.GetOpenGLProjectionMatrix(m_znear,m_zfar);
+
+    glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(K.Data().get());
 
 }
@@ -107,6 +111,10 @@ void CViewer::initializeGL(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_COLOR_MATERIAL);
     glDepthFunc(GL_LEQUAL);
+
+    // set viewport size != window size
+    QSize ws = this->size();
+    glViewport(0,0,ws.width(),ws.height());
 
     // load intrinsics
     loadProjectionMatrix();
@@ -264,12 +272,24 @@ void CViewer::keyPressEvent(QKeyEvent* event) {
 
     }
 
-    if(event->key() == Qt::Key_B) {
+    if(event->key() == Qt::Key_Minus) {
 
-        this->updateBoundingBox();
+        CVector<float,3> dt;
+        dt(2) = -0.05*(m_zfar-m_znear);
+        m_viewpoint.DifferentialTranslate(dt);
+        this->loadView(m_viewpoint.GetTransformation());
+        this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
+        this->updateGL();
 
-        m_center = m_bbox.Barycenter();
+    }
 
+    if(event->key() == Qt::Key_Plus) {
+
+        CVector<float,3> dt;
+        dt(2) = 0.05*(m_zfar-m_znear);
+        m_viewpoint.DifferentialTranslate(dt);
+        this->loadView(m_viewpoint.GetTransformation());
+        this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
         this->updateGL();
 
     }
@@ -359,6 +379,9 @@ void CTriMeshViewer::updateBoundingBox() {
     // recompute bounding box
     m_bbox = m_mesh->BoundingBox();
 
+    // set center of camera rotation
+    m_center = m_bbox.Barycenter();
+
     // update clip depths
     this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
 
@@ -429,7 +452,6 @@ void CTriMeshViewer::mouseReleaseEvent(QMouseEvent *event) {
 
     // update clip depths only after change is done
     this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
-
     this->updateGL();
 
     event->accept();

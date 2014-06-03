@@ -35,6 +35,8 @@ private slots:
 
     void on_actionLoad_Mesh_triggered();
 
+    void on_imgSpinBox_valueChanged(int arg1);
+
 private:
 
     Ui::MainWindow* ui;                                //! the GUI

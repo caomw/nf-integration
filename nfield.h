@@ -53,7 +53,15 @@ public:
     //! Standard constructor.
     CNormalField():m_cam(),m_viewpoint(),m_raw_data(), m_mask() {}
 
-    //! Read normal field from an OpenEXR file.
+    /*! \brief Read normal field from an OpenEXR file.
+     *
+     * \details Depending on the projection matrix read from file, a orthographic
+     * or perspective camera model is used, the latter when the lower-right entry of
+     * \f$K_33=0\f$, the former if \f$K_33=1\f$.
+     *
+     *
+     *
+     */
     virtual void ReadFromFile(const char* filename);
 
     //! Project to image and compute value using bilinear interpolation.

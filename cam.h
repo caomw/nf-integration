@@ -8,25 +8,22 @@
 
 /*! \brief linear/projective camera model
  *
- * TODO: remove size parameter, it is in CRawData anyway
+ * \details CAVEAT: In the orthographic model #m_f is not really a focal lengths
+ * but rather a factor which converts metric units into pixels accounting
+ * for the aspect ratio of the image. In this case, the units of #m_f are pixels
+ * per mm or m (or whatever the unit for lengt in 3d may be). Otherwise the units
+ * of #m_f are just pixels.
  */
 template<typename T=double>
 class CCamera {
-
 
 public:
 
     //! Constructor.
     CCamera();
 
-    //! Constructor.
-    CCamera(size_t w, size_t h);
-
-    //! Constructor.
-    CCamera(T fu, T fv, T cu, T cv);
-
-    //! Constructor.
-    CCamera(size_t w, size_t h, T fu, T fv, T cu, T cv);
+    //! Constructor pinhole projection.
+    CCamera(size_t w, size_t h, T fu, T fv, T cu, T cv, bool orthographic = false);
 
     /*! \brief Projects a point into the image plane.
      *
@@ -36,46 +33,8 @@ public:
      */
     CVector<T,2> Project(const CVector<T,3>& x) const;
 
-    /*! \brief Computes the projection of a point into the image plane and its Jacobian.
-     *
-     * \param[in] x point in camera coordinates
-     * \param[out] u point in pixel coordinates
-     * \param[out] J Jacobian of the projection mapping in u
-     *
-     */
-    void Project(const CVector<T,3>& x, CVector<T,2>& u, CDenseArray<T>& J) const;
-
-    /*! \brief Converts a pixel into a viewing direction.
-     *
-     * \param[in] u location w.r.t. the pixel coordinate system
-     * \returns direction vector, normalized s.t. \f$z\f$-component equals \f$1\f$
-     *
-     */
-    CVector<T,3> Normalize(const CVector<T,2>& u) const;
-
-    /*! \brief Projects differential motion to optical flow vector.
-     *
-     * \param[in] x point in camera coordinates
-     * \param[in] dx differential motion vector in 3d
-     * \returns direction vectors
-     *
-     */
-    CVector<T,2> Flow(const CVector<T,3>& x, const CVector<T,3>& dx) const;
-
     //! Writes the camera parameters to a stream.
     template<typename U> friend std::ostream& operator << (std::ostream& os, const CCamera<U>& x);
-
-    //! Reads the camera parameters from a stream.
-    template<typename U> friend std::istream& operator >> (std::istream& is, CCamera<U>& x);
-
-    //! Checks if two cameras are the same.
-    bool operator==(const CCamera<T>& cam);
-
-    //! Access to image size.
-    CVector<size_t,2> GetSize() const {  return { m_size[0], m_size[1] }; }
-
-    //! Projection matrix.
-    CDenseArray<T> GetProjectionMatrix() const;
 
     /*! \brief Projection matrix for use in OpenGL context.
      *
@@ -85,13 +44,15 @@ public:
      */
     CDenseArray<T> GetOpenGLProjectionMatrix(T znear, T zfar) const;
 
+    //! Access to image size.
+    CVector<size_t,2> GetSize() { return { m_size[0], m_size[1] }; }
+
 private:
 
-    size_t m_size[2];			//!< pixel size
+    bool m_orthographic;        //!< orthographic projection flag
+    size_t m_size[2];           //!< size
     T m_f[2];   				//!< focal length
     T m_c[2];       			//!< principle point
-    T m_alpha;          		//!< skew coefficient
-    T m_k[5];               	//!< distortion coefficients
 
 };
 

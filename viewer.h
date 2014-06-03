@@ -122,7 +122,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event);
 
     //! Update clip depth based on the bounding box approximation of the current mesh.
-    void updateClipDepth(const CRigidMotion<float,3>& F, float tolerance = 1.0);
+    void updateClipDepth(const CRigidMotion<float,3>& F, float tolerance = 1.1);
 
 private:
 

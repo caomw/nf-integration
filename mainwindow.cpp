@@ -126,9 +126,23 @@ void MainWindow::on_actionLoad_Mesh_triggered() {
 
     m_mesh_filename = QFileDialog::getOpenFileName(this, tr("Open start mesh..."),
                                                    ".",
-                                                   tr("(*.stl);;(*.ply);;(*.off);;(*.obj)"));
+                                                   tr("(*.ply);;(*.stl);;(*.off);;(*.obj)"));
 
     // everything else is the same as in reload
     on_actionReload_triggered();
+
+    // first load
+    m_viewer->updateBoundingBox();
+
+}
+
+void MainWindow::on_imgSpinBox_valueChanged(int arg1) {
+
+    if(arg1>=0 && arg1<m_imgs.size() && m_imgs.size()>0) {
+
+        emit cameraChanged(m_imgs.at(arg1).GetCam());
+        emit viewpointChanged(m_imgs.at(arg1).GetViewpoint());
+
+    }
 
 }

@@ -6,9 +6,9 @@
 
 using namespace std;
 
-// Matrix-assembly in TriMesh
-// Load mesh and data
-// Construct viewer/
+// Visualization of field in main window -> flow class from server!, save image!!
+//
+//
 //
 //
 //
