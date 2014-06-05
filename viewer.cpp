@@ -2,8 +2,8 @@
 
 #include "viewer.h"
 
-#define NEAR_PLANE_TOL 0.8
-#define FAR_PLANE_TOL 1.6
+#define NEAR_PLANE_TOL 0.5
+#define FAR_PLANE_TOL 1.5
 
 using namespace std;
 
@@ -11,7 +11,7 @@ CViewer::CViewer(QWidget* parent):
     QGLWidget(parent),
     m_cam(),
     m_viewpoint(),
-    m_znear(0.001),
+    m_znear(0.0001),
     m_zfar(50.0),
     m_last_point(),
     m_center(),
@@ -298,7 +298,6 @@ void CViewer::keyPressEvent(QKeyEvent* event) {
     if(event->key() == Qt::Key_C) {
 
         m_show_color = !m_show_color;
-
         this->updateGL();
 
     }
@@ -474,21 +473,21 @@ void CTriMeshViewer::paintGL() {
 
     for (f_it=m_mesh->faces_begin(); f_it!=m_mesh->faces_end(); ++f_it) {
 
-        // load normal
-        glNormal3fv(&m_mesh->normal(f_it)[0]);
+        // load normal, FIXME: are the normals computed in the wrong way?
+        // or does OpenGL flip them???
+        TriangleMesh::Normal temp = -m_mesh->normal(f_it);
+        glNormal3fv(&temp[0]);
+
+        if(m_show_color) {
+
+            OpenMesh::Vec3uc color = m_mesh->color(f_it);
+            glColor3ub(color[0],color[1],color[2]);
+
+        }
+        else
+            glColor3ub(200,200,200);
 
         for (fv_it = m_mesh->cfv_iter(f_it.handle()); fv_it; ++fv_it) {
-
-            // load color
-            if(m_show_color) {
-
-                OpenMesh::Vec3uc color = m_mesh->color(fv_it);
-                glColor3ub(color[0],color[1],color[2]);
-
-            }
-            else
-                glColor3ub(200,200,200);
-
 
             // load vertex
             glVertex3fv(&m_mesh->point(fv_it)[0]);

@@ -26,7 +26,7 @@ CRawData<T>::CRawData(size_t nrows, size_t ncols):
 }
 
 template<typename T>
-CVector<T,3> CRawData<T>::Get(size_t i, size_t j) {
+CVector<T,3> CRawData<T>::Get(size_t i, size_t j) const {
 
     T* pd = m_data.get();
     size_t nelems = m_nrows*m_ncols;
@@ -35,7 +35,7 @@ CVector<T,3> CRawData<T>::Get(size_t i, size_t j) {
 }
 
 template<typename T>
-CVector<T,3> CRawData<T>::Get(const CVector<T,2>& x) {
+CVector<T,3> CRawData<T>::Get(const CVector<T,2>& x) const {
 
     T u, v;
     u = x.Get(0);
@@ -64,6 +64,7 @@ CVector<T,3> CRawData<T>::Get(const CVector<T,2>& x) {
 }
 
 template class CRawData<float>;
+template class CRawData<double>;
 
 template<>
 void CNormalField<float>::ReadFromFile(const char* filename) {
@@ -163,14 +164,11 @@ CVector<T,3> CNormalField<T>::Get(const CVector<T,3>& x) {
 
 }
 
-template class CNormalField<float>;
-
-
 template<typename T>
-CVector<T,3> CDeflectometricNormalField<T>::Get(const CVector<T,3>& x) {
+CVector<T,3> CNormalField<T>::GetDeflectometricNormal(const CVector<T,3>& x) {
 
-    CVector<T,3> o = CNormalField<T>::m_viewpoint.GetLocation();
-    CVector<T,3> l = CNormalField<T>::Get(x);
+    CVector<T,3> o = m_viewpoint.GetLocation();
+    CVector<T,3> l = this->Get(x);
 
     CVector<T,3> s = x - o;
     CVector<T,3> r = x - l;
@@ -188,5 +186,7 @@ CVector<T,3> CDeflectometricNormalField<T>::Get(const CVector<T,3>& x) {
 
 }
 
-template class CDeflectometricNormalField<float>;
+template class CNormalField<float>;
+template class CNormalField<double>;
+
 

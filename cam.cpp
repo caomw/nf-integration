@@ -33,7 +33,7 @@ CVector<T,2> CCamera<T>::Project(const CVector<T,3>& x) const {
 
     CVector<T,2> xp;
 
-    if(m_orthographic) {
+    if(!m_orthographic) {
 
         if(x.Get(2)==0)
             throw runtime_error("CCamera::Project: Division by zero.");

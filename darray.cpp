@@ -73,50 +73,6 @@ void CDenseArray<T>::Resize(size_t nrows, size_t ncols) {
 }
 
 template <typename T>
-void CDenseArray<T>::Concatenate(const CDenseArray& array, bool direction) {
-
-    // put on top of each other
-    if(!direction) {
-
-        assert(m_ncols==array.NCols());
-
-        size_t oldnrows = m_nrows;
-
-        // now resize, this changes m_nrows
-        this->Resize(oldnrows+array.NRows(),m_ncols);
-
-        // copy
-        for(size_t i=0; i<array.NRows(); i++) {
-
-            for(size_t j=0; j<array.NCols(); j++)
-                this->operator ()(oldnrows+i,j) = array.Get(i,j);
-
-        }
-
-    }
-    else {
-
-        assert(m_nrows==array.NRows());
-
-        size_t oldncols = m_ncols;
-
-        // now resize, this changes m_nrows
-        this->Resize(m_nrows,oldncols+array.NCols());
-
-        // copy
-        for(size_t i=0; i<array.NRows(); i++) {
-
-            for(size_t j=0; j<array.NCols(); j++)
-                this->operator ()(i,oldncols+j) = array.Get(i,j);
-
-        }
-
-
-    }
-
-}
-
-template <typename T>
 CDenseArray<T>::CDenseArray(const CDenseArray& array):
 	m_nrows(array.m_nrows),
 	m_ncols(array.m_ncols),
@@ -714,118 +670,6 @@ T CDenseArray<T>::Trace() const {
 }
 
 template <typename T>
-T CDenseArray<T>::Determinant() const {
-
-	assert((m_ncols==2 && m_nrows==2) || (m_ncols==3 && m_nrows==3));
-
-	T det = 0;
-
-	switch (m_nrows) {
-
-		case 2:
-
-			det = Get(0,0)*Get(1,1) - Get(0,1)*Get(1,0);
-
-			break;
-
-		case 3:
-
-			det = Get(0,0)*(Get(1,1)*Get(2,2)-Get(1,2)*Get(2,1)) - Get(0,1)*(Get(1,0)*Get(2,2)-Get(2,0)*Get(1,2)) + Get(0,2)*(Get(1,0)*Get(2,1)-Get(2,0)*Get(1,1));
-
-			break;
-
-		default:
-
-			det = 0;
-
-			break;
-	}
-
-	return det;
-
-}
-
-template <typename T>
-bool CDenseArray<T>::Invert() {
-
-    // this is not implemented yet for fields other than the reals
-    assert(false);
-
-    return false;
-
-}
-
-template <>
-bool CDenseArray<double>::Invert() {
-
-    assert((m_ncols==2 && m_nrows==2) || (m_ncols==3 && m_nrows==3));
-
-    double* pdata = m_data.get();
-    double* temp = new double[m_nrows*m_ncols];
-    memcpy(temp,pdata,m_nrows*m_ncols*sizeof(double));
-
-    if(m_nrows==2) {
-
-        double det = temp[0]*temp[3]-temp[1]*temp[2];
-
-        if(det==0) {
-
-            delete [] temp;
-            return 1;
-
-        }
-
-        double deti = 1/det;
-
-        // first linear part
-        pdata[0] = deti*temp[3];
-        pdata[1] = -deti*temp[1];
-        pdata[2] = -deti*temp[2];
-        pdata[3] = deti*temp[0];
-
-    }
-    else if(m_nrows==3) {
-
-        // inverse of det
-        double det = temp[0]*(temp[4]*temp[8] - temp[5]*temp[7])
-                   - temp[3]*(temp[8]*temp[1] - temp[2]*temp[7])
-                   + temp[6]*(temp[1]*temp[5] - temp[2]*temp[4]);
-
-        if(det==0) {
-
-            delete [] temp;
-            return 1;
-
-        }
-
-        double deti = 1.0/det;
-
-        // first linear part
-        pdata[0] = deti*(temp[4]*temp[8] - temp[5]*temp[7]);
-        pdata[1] = -deti*(temp[1]*temp[8] - temp[2]*temp[7]);
-        pdata[2] = deti*(temp[1]*temp[5] - temp[2]*temp[4]);
-        pdata[3] = -deti*(temp[3]*temp[8] - temp[5]*temp[6]);
-        pdata[4] = deti*(temp[0]*temp[8] - temp[2]*temp[6]);
-        pdata[5] = -deti*(temp[0]*temp[5] - temp[2]*temp[3]);
-        pdata[6] = deti*(temp[3]*temp[7] - temp[4]*temp[6]);
-        pdata[7] = -deti*(temp[0]*temp[7] - temp[1]*temp[6]);
-        pdata[8] = deti*(temp[0]*temp[4] - temp[1]*temp[3]);
-
-    }
-    else {
-
-        delete [] temp;
-        return 1;
-
-    }
-
-    delete [] temp;
-
-    return 0;
-
-}
-
-template <typename T>
 void CDenseArray<T>::Transpose() {
 
     std::swap(m_nrows,m_ncols);
@@ -983,10 +827,11 @@ T CDenseArray<T>::Get(size_t i, size_t j) const {
 
     T* pdata = m_data.get();
 
-	if(!m_transpose)
-        return pdata[m_nrows*j + i];
-	else
+    // m_ncols and m_nrows are swapped in Transpose()
+    if(!m_transpose)
         return pdata[m_ncols*i + j];
+    else
+        return pdata[m_nrows*j + i];
 
 }
 
@@ -1083,92 +928,6 @@ vector<U> CDenseArray<T>::Gradient(size_t i, size_t j) const {
 template vector<double> CDenseArray<double>::Gradient<double>(size_t i, size_t j) const;
 template vector<vec3> CDenseArray<rgb>::Gradient<vec3>(size_t i, size_t j) const;
 
-//template <typename T>
-//template <typename U>
-//CVector<U,2> CDenseArray<T>::ProjectToBoundary(const CVector<U,2>& x) const {
-
-//    CVector<U,2> result = x;
-
-//    if(x.Get(0)<0)
-//        result(0) = 0;
-
-//    if(x.Get(0)>=this->NCols())
-//        result(0) = this->NCols() - 1;
-
-//    if(x.Get(1)<0)
-//        result(1) = 0;
-
-//    if(x.Get(1)>=this->NRows())
-//        result(1) = this->NRows() - 1;
-
-//    return result;
-
-//}
-
-template <typename T>
-CDenseVector<T> CDenseArray<T>::GetColumn(size_t j) const {
-
-    if(m_transpose)
-        return GetRow(j);
-
-    // if sizeof(T)*nrows is a multiple of 16, we can make a shallow copy
-    if(sizeof(T)*m_nrows%16==0) {
-
-        shared_ptr<T> colptr(m_data,m_data.get()+j*m_nrows);
-
-        // create column view
-        CDenseVector<T> col(m_nrows,colptr);
-
-        return col;
-
-    }
-
-    CDenseVector<T> col(m_nrows); // this will be 16-byte aligned
-
-    for(size_t i=0; i<m_nrows; i++)
-        col(i) = Get(i,j);
-
-    return col;
-
-}
-
-template <typename T>
-void CDenseArray<T>::SetColumn(size_t j, const CDenseVector<T>& col) {
-
-    assert(col.NCols()==1 && col.NRows() == NRows() && j<=NCols());
-
-	for(size_t i=0; i<col.NRows(); i++)
-		this->operator ()(i,j) = col.Get(i);
-
-}
-
-template <typename T>
-void CDenseArray<T>::SetRow(size_t i, const CDenseVector<T>& row) {
-
-    assert(row.NRows()==1 && row.NCols() == NCols() && i<=NRows());
-
-    for(size_t j=0; j<row.NCols(); j++)
-        this->operator ()(i,j) = row.Get(j);
-
-}
-
-template <typename T>
-CDenseVector<T> CDenseArray<T>::GetRow(size_t i) const {
-
-    if(m_transpose)
-        return GetColumn(i);
-
-    // since matrix is stored in col-major order, we have to make a hard-copy
-    CDenseVector<T> row(m_ncols);
-    row.Transpose();
-
-	for(size_t j=0; j<m_ncols; j++)
-		row(j) = Get(i,j);
-
-	return row;
-
-}
-
 template <typename T>
 T& CDenseArray<T>::operator()(size_t i, size_t j) {
 
@@ -1176,10 +935,10 @@ T& CDenseArray<T>::operator()(size_t i, size_t j) {
 
     T* pdata = m_data.get();
 
-	if(!m_transpose)
+    if(!m_transpose)
+        return pdata[m_ncols*i + j];
+    else
         return pdata[m_nrows*j + i];
-	else
-        return pdata[m_nrows*i + j];				// m_nrows is replaced by m_ncols in transpose method
 
 }
 
@@ -1274,25 +1033,6 @@ CDenseArray<T> CDenseArray<T>::operator^(const CDenseArray& array) const {
 	return result;
 
 }
-
-template <typename T>
-CDenseVector<T> CDenseArray<T>::ColumwiseInnerProduct(const CDenseArray<T>& x, const CDenseArray<T>& y) {
-
-    assert(x.m_nrows==y.m_nrows && x.m_ncols==y.m_ncols);
-
-    CDenseVector<T> result(x.m_ncols);
-
-    for(size_t i=0; i<x.m_nrows; i++) {
-
-        for(size_t j=0; j<x.m_ncols; j++)
-            result(j) += x.Get(i,j)*y.Get(i,j);
-
-    }
-
-    return result;
-
-}
-
 
 template <typename T>
 CDenseArray<T> CDenseArray<T>::KroneckerProduct(const CDenseArray<T>& x, const CDenseArray<T>& y) {
@@ -1433,42 +1173,6 @@ CDenseVector<T> CDenseArray<T>::operator*(const CDenseVector<T>& vector) const {
 
 }
 
-/*template<typename T>
-template<class Array> Array CDenseArray<T>::operator*(const Array& array) const {
-
-
-    assert(m_ncols==array.m_nrows);
-
-    Array result(m_nrows,array.m_ncols);
-
-    for(size_t i=0; i<m_nrows; i++) {
-
-        for(size_t j=0; j<array.m_ncols; j++) {
-
-            T sum = 0;
-
-            for(size_t k=0; k<m_ncols; k++)
-                sum += Get(i,k)*(array.Get(k,j));
-
-            result(i,j) = sum;
-
-        }
-
-    }
-
-
-    return result;
-
-}
-
-template CDenseArray<double> CDenseArray<double>::operator *(const CDenseArray<double>& x) const;
-template CDenseVector<double> CDenseArray<double>::operator *(const CDenseVector<double>& x) const;
-template CDenseArray<float> CDenseArray<float>::operator *(const CDenseArray<float>& x) const;
-template CDenseVector<float> CDenseArray<float>::operator *(const CDenseVector<float>& x) const;
-template CDenseVector<int> CDenseArray<int>::operator *(const CDenseVector<int>& x) const;
-template CDenseArray<int> CDenseArray<int>::operator *(const CDenseArray<int>& x) const;*/
-
-
 template<typename T>
 template <u_int n> CVector<T,n> CDenseArray<T>::operator*(const CVector<T,n>& vector) const {
 
@@ -1503,22 +1207,6 @@ void CDenseArray<T>::Scale(T scalar) {
 
 	for(size_t i=0; i<m_nrows*m_ncols; i++)
         pdata[i] *= scalar;
-
-}
-
-template <typename T>
-CDenseArray<T> CDenseArray<T>::ScaleColumns(const CDenseVector<T>& s) {
-
-    CDenseArray<T> result(m_nrows,m_ncols);
-
-    for(size_t i=0; i<m_nrows; i++) {
-
-        for(size_t j=0; j<m_ncols; j++)
-            result(i,j) = this->Get(i,j)*s.Get(j);
-
-    }
-
-    return result;
 
 }
 

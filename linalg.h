@@ -64,7 +64,7 @@ public:
     CCSCMatrix(size_t m, size_t n);
 
     //! Resize.
-    void Resize(size_t m, size_t n) { m_nrows = m; m_ncols = n; }
+    void Resize(size_t m, size_t n);
 
     /*! \brief Constructor which takes MatrixMarket triples as input.
      *
@@ -103,16 +103,19 @@ public:
     template<class Matrix> void Multiply(Matrix& out, const Matrix& in) const;
 
     //! Form the square of a matrix in an efficient way.
-    static CCSCMatrix<T,U> Square(const CCSCMatrix<T,U>& A);
+    static CCSCMatrix<T,U> Square(const CCSCMatrix<T,U>& A, T  lambda = 0);
 
     //! Low-level access to the column pointer.
-    U* GetColumnPointer() const { return &(*m_colptr.get())[0]; }
+    std::shared_ptr<std::vector<U> > GetColumnPointer() const { return m_colptr; }
 
     //! Low-level access to the row index array.
-    U* GetRowIndices() const { return &(*m_rows.get())[0]; }
+    std::shared_ptr<std::vector<U> > GetRowIndices() const { return m_rows; }
 
     //! Low-level access to the value array.
-    T* GetValues() const { return &(*m_vals.get())[0]; }
+    std::shared_ptr<std::vector<T> > GetValues() const { return m_vals; }
+
+    //! Write data to file.
+    void SaveToFile(const char* filename);
 
 private:
 

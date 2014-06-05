@@ -76,9 +76,6 @@ public:
 	//! Copy constructor.
 	CDenseArray(const CDenseArray& array);
 
-    //! Concatenate two arrays.
-    void Concatenate(const CDenseArray& array, bool direction);
-
     //! Assignment operator.
     CDenseArray<T> operator=(const CDenseArray<T>& array);
 
@@ -144,28 +141,6 @@ public:
     //! Compute central-difference approximation of the gradient of the array data.
     template<typename U> std::vector<U> Gradient(size_t i, size_t j) const;
 
-    //! Maps a point that is out of bounds to its closest points on the boundary.
-    template<typename U>
-    CVector<U,2> ProjectToBoundary(const CVector<U,2>& x) const {
-
-        CVector<U,2> result = x;
-
-        if(x.Get(0)<0)
-            result(0) = 0;
-
-        if(x.Get(0)>=this->NCols())
-            result(0) = this->NCols() - 1;
-
-        if(x.Get(1)<0)
-            result(1) = 0;
-
-        if(x.Get(1)>=this->NRows())
-            result(1) = this->NRows() - 1;
-
-        return result;
-
-    }
-
 	//! Overwrites data.
     void Set(std::shared_ptr<T> data);
 
@@ -174,18 +149,6 @@ public:
 
     //! Set the array data according to an analytical function.
     void Set(const CBivariateFunction& f);
-
-	//! Returns a column.
-    CDenseVector<T> GetColumn(size_t j) const;
-
-    //! Sets a column.
-	void SetColumn(size_t j, const CDenseVector<T>& col);
-
-	//! Returns a row.
-    CDenseVector<T> GetRow(size_t i) const;
-
-    //! Sets a row.
-    void SetRow(size_t i, const CDenseVector<T>& row);
 
 	//! Element access.
 	T& operator()(size_t i, size_t j);
@@ -215,9 +178,6 @@ public:
     CDenseArray<T> operator/(const T& scalar) const;
 
     //! Multiplies the object with an array from the right.
-    //template<class Array> Array operator*(const Array& array) const;
-
-	//! Multiplies the object with an array from the right.
     CDenseArray<T> operator*(const CDenseArray<T>& array) const;
 
 	//! Multiplies the object with an array from the right.
@@ -225,9 +185,6 @@ public:
 
     //! Matrix-vector multiplication.
     template<u_int n> CVector<T,n> operator*(const CVector<T,n>& vector) const;
-
-    //! Computes inner products between columns.
-    static CDenseVector<T> ColumwiseInnerProduct(const CDenseArray<T>& x, const CDenseArray<T>& y);
 
 	//! Computes tensor product of two matrices.
     static CDenseArray<T> KroneckerProduct(const CDenseArray<T>& x, const CDenseArray<T>& y);
@@ -252,9 +209,6 @@ public:
 
 	//! In-place scalar multiplication.
 	void Scale(T scalar);
-
-    //! Scale column.
-    CDenseArray<T> ScaleColumns(const CDenseVector<T>& s);
 
     //! In-place addition of a scalar.
     void Add(const T& scalar);
@@ -307,20 +261,11 @@ public:
 	 */
 	T Trace() const;
 
-	/*! \brief Computes the determinant of a matrix.
-	 *
-	 * \details The current implementation can only handle \f$2\times 2\f$- and \f$3\times 3\f$ matrices.
-	 */
-	T Determinant() const;
-
 	//! Returns the number of bytes of the data type.
     size_t SizeOf() const { return sizeof(T); }
 
     //! Returns the numerical type.
     ETYPE GetType() { return GetEType<T>(); }
-
-    //! Matrix inversion.
-    bool Invert();
 
     //! Typecast operator
     template<class Array> operator Array() {

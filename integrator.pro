@@ -1,4 +1,4 @@
-QT       += core gui opengl
+QT       += core gui opengl #testlib
 
 QMAKE_CXXFLAGS += -std=c++0x -O3
 
@@ -10,31 +10,41 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    vecn.cpp \
-    cam.cpp \
-    trafo.cpp \
-    linalg.cpp \
-    nfield.cpp \
-    darray.cpp \
-    types.cpp \
-    trimesh.cpp \
-    viewer.cpp \
-    bbox.cpp
+        vecn.cpp \
+        cam.cpp \
+        trafo.cpp \
+        linalg.cpp \
+        nfield.cpp \
+        darray.cpp \
+        types.cpp \
+        trimesh.cpp \
+        viewer.cpp \
+        bbox.cpp \
+    unittests.cpp \
+    flowviz.cpp
 
 HEADERS  += mainwindow.h \
-    vecn.h \
-    cam.h \
-    trafo.h \
-    linalg.h \
-    nfield.h \
-    darray.h \
-    types.h \
-    trimesh.h \
-    viewer.h \
-    bbox.h
+            vecn.h \
+            cam.h \
+            trafo.h \
+            linalg.h \
+            nfield.h \
+            darray.h \
+            types.h \
+            trimesh.h \
+            viewer.h \
+            bbox.h \
+    unittests.h \
+    flowviz.h
 
 FORMS    += mainwindow.ui
 
+contains(QT,testlib) {
+    DEFINES += HAVE_UNITTESTS
+}
+
+
+QT += testlib
 
 unix:!symbian|win32 {
 
@@ -47,14 +57,14 @@ unix:!symbian|win32 {
 
     }
     else {
-        warning("Could not resolve dependence on OpenEXR...")
+        error("Could not resolve mandatory dependence on OpenEXR...")
     }
 
 
     # find OpenMesh library
     OM = $$system(find /usr -name libOpenMeshCore* 2>/dev/null)
     isEmpty(OM) {
-        warning("Could not resolve dependency on OpenMesh.")
+        error("Could not resolve mandatory dependency on OpenMesh...")
     } else {
 
         OM = $$first(OM)
@@ -69,7 +79,6 @@ unix:!symbian|win32 {
         QMAKE_LFLAGS += -Wl,-rpath=$$OMLIBPATH
 
     }
-
 
     LIBS += -lcholmod
 

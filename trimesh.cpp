@@ -9,6 +9,8 @@
 using namespace std;
 using namespace OpenMesh;
 
+#define ZERO_TOL 1e-10
+#define COTAN_EPSILON 1e-10
 
 CTriangleMesh::CTriangleMesh():
         TriangleMesh() {
@@ -42,7 +44,7 @@ float CTriangleMesh::CotanOppositeAngle(HalfedgeHandle heh) {
 		v3v2 = v3v2.normalize();
 		sp = OpenMesh::dot(v3v1,v3v2);
 
-		cotanAngle = sp / sqrt(1 - sp * sp);
+        cotanAngle = sp / sqrt(1.0f - sp * sp);
 
         if(std::isnan(cotanAngle))
             cotanAngle = sp / sqrt(1 - sp * sp + COTAN_EPSILON);
@@ -562,9 +564,9 @@ void CTriangleMesh::SimpleSmooth(u_int n, bool boundary) {
 
 }
 
-CCSCMatrix<float,int> CTriangleMesh::ComputeGradientOperator() {
+CCSCMatrix<double, int> CTriangleMesh::ComputeGradientOperator() {
 
-    vector<CCSCTriple<float,int> > entries;
+    vector<CCSCTriple<double,int> > entries;
 
     // row pointer
     size_t row = 0;
@@ -590,8 +592,12 @@ CCSCMatrix<float,int> CTriangleMesh::ComputeGradientOperator() {
                 // find col index
                 size_t col = fv_it.handle().idx();
 
-                for(uint i=0; i<3; i++)
-                    entries.push_back(CCSCTriple<float,int>(row+i,col,grad[i]));
+                for(uint i=0; i<3; i++) {
+
+                    if(abs(grad[i])>ZERO_TOL)
+                        entries.push_back(CCSCTriple<double,int>(row+i,col,grad[i]));
+
+                }
 
             }
 
@@ -601,7 +607,7 @@ CCSCMatrix<float,int> CTriangleMesh::ComputeGradientOperator() {
 
     }
 
-    return CCSCMatrix<float,int>(3*this->n_faces(),this->n_vertices(),entries);
+    return CCSCMatrix<double,int>(3*this->n_faces(),this->n_vertices(),entries);
 
 }
 
@@ -674,5 +680,85 @@ float CTriangleMesh::MeanEdgeLength() {
         length += this->calc_edge_sqr_length(e_it);
 
     return length/float(this->n_edges());
+
+}
+
+void CTriangleMesh::SaveToFile(const char* filename) {
+
+    string fn(filename);
+
+    string ext = fn.substr(fn.size()-3,3);
+
+    if(ext==string("vtk")) {
+        this->SaveAsVTK(filename);
+    }
+    else if(ext==string("off")) {
+
+        OpenMesh::IO::Options wopt;
+        wopt += OpenMesh::IO::Options::FaceColor;
+
+        if(!OpenMesh::IO::write_mesh(*this,filename,wopt))
+            throw std::runtime_error("Could not write file.");
+
+    }
+    else if(ext==string("ply") || ext==string("stl") || ext==string("obj")) {
+
+        if(!OpenMesh::IO::write_mesh(*this,filename))
+            throw std::runtime_error("Could not write file.");
+
+    }
+
+}
+
+void CTriangleMesh::SaveAsVTK(const char* filename) {
+
+    ofstream out(filename);
+
+    out << "# vtk DataFile Version 2.0" << endl;
+    out << "created by blz" << endl;
+    out << "ASCII" << endl;
+    out << "DATASET UNSTRUCTURED_GRID" << endl;
+    out << "POINTS " << this->n_vertices() << " double" << endl;
+
+    TriangleMesh::VertexIter v_it;
+
+    for(v_it=this->vertices_begin(); v_it!=this->vertices_end(); ++v_it)
+        out << this->point(v_it)[0] << " " << this->point(v_it)[1] << " " << this->point(v_it)[2] << endl;
+
+    out << "CELLS " << this->n_faces() << " " << 4*this->n_faces() << endl;
+
+    TriangleMesh::ConstFaceIter f_it;
+    TriangleMesh::ConstFaceVertexIter fv_it;
+    for (f_it=this->faces_begin(); f_it!=this->faces_end(); ++f_it) {
+
+        out << "3 ";
+
+        for (fv_it = this->cfv_iter(f_it.handle()); fv_it; ++fv_it)
+            out << fv_it.handle().idx() << " ";
+
+        out << endl;
+
+    }
+
+    out << "CELL_TYPES " << this->n_faces() << endl;
+
+    for(size_t k=0; k<this->n_faces(); k++)
+        out << "5" << endl;
+
+    OpenMesh::FPropHandleT<vec3f> nt;
+
+    if(this->get_property_handle(nt,"nt")) {
+
+        out << "CELL_DATA " << this->n_faces() << endl;
+        out << "VECTORS \"nt\" double " << endl;
+
+        for (f_it=this->faces_begin(); f_it!=this->faces_end(); ++f_it) {
+            vec3f n = this->property(nt,f_it);
+            out << n.Get(0) << " " << n.Get(1) << " " << n.Get(2) << endl;
+        }
+
+    }
+
+    out.close();
 
 }

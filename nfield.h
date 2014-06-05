@@ -7,8 +7,9 @@
 #include "vecn.h"
 #include "cam.h"
 
-// forward declaration
+// forward declarations
 template<typename T> class CNormalField;
+template<typename T> class CFlowVisualization;
 
 /*! \brief storage of 3-vector fields over a regular Cartesian lattice
  *
@@ -19,6 +20,7 @@ template <typename T>
 class CRawData {
 
     friend class CNormalField<T>;
+    friend class CFlowVisualization<T>;
 
 public:
 
@@ -29,10 +31,10 @@ public:
     CRawData(size_t nrows, size_t ncols);
 
     //! Get value at grid points.
-    CVector<T,3> Get(size_t i, size_t j);
+    CVector<T,3> Get(size_t i, size_t j) const;
 
     //! Get value at intermediate grid points using bilinear interpolation.
-    CVector<T,3> Get(const CVector<T,2>& x);
+    CVector<T,3> Get(const CVector<T,2>& x) const;
 
 private:
 
@@ -48,6 +50,8 @@ private:
 template<typename T>
 class CNormalField {
 
+    friend class CFlowVisualization<T>;
+
 public:
 
     //! Standard constructor.
@@ -62,10 +66,13 @@ public:
      *
      *
      */
-    virtual void ReadFromFile(const char* filename);
+    void ReadFromFile(const char* filename);
 
     //! Project to image and compute value using bilinear interpolation.
-    virtual CVector<T,3> Get(const CVector<T,3>& x);
+    CVector<T,3> Get(const CVector<T,3>& x);
+
+    //! Get scene point and compute deflectometric normal.
+    CVector<T,3> GetDeflectometricNormal(const CVector<T,3>& x);
 
     //! Access to camera.
     const CCamera<T>& GetCam() { return m_cam; }
@@ -81,20 +88,5 @@ protected:
     CDenseArray<uint> m_mask;
 
 };
-
-template<typename T>
-class CDeflectometricNormalField:public CNormalField<T> {
-
-public:
-
-    //! Standard constructor.
-    CDeflectometricNormalField():CNormalField<T>::CNormalField() {}
-
-    //! Project point to image plane and compute normal according to law and reflection.
-    CVector<T,3> Get(const CVector<T,3>& x);
-
-
-};
-
 
 #endif // NFIELD_H

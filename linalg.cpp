@@ -48,7 +48,8 @@ CCSCMatrix<T,U>::CCSCMatrix(size_t m, size_t n):
     m_vals(new vector<T>()) {
 
     fill_n(m_colptr->begin(),n+1,0);
-
+    m_rows->reserve(10*(m+n));
+    m_vals->reserve(10*(m+n));
 }
 
 template<typename T, typename U>
@@ -150,6 +151,23 @@ void CCSCMatrix<T,U>::Scale(T scalar) {
 
 }
 
+template<typename T, typename U>
+void CCSCMatrix<T,U>::Resize(size_t m, size_t n) {
+
+    if(m<=m_nrows || n<=m_ncols)
+        return;
+
+    m_nrows = m;
+
+    U old_col_ptr = m_colptr->back();
+    for(int k=0; k<n-m_ncols; k++)
+        m_colptr->push_back(old_col_ptr);
+
+    m_ncols = n;
+
+}
+
+
 template<typename V,typename W>
 ostream& operator << (ostream& os, const CCSCMatrix<V,W>& x) {
 
@@ -214,7 +232,7 @@ template<typename T, typename U>
 template<class Matrix>
 void CCSCMatrix<T,U>::Multiply(Matrix& out, const Matrix& in) const {
 
-    if(this->NRows()==in.NRows())
+    if(this->NRows()!=in.NRows())
         throw runtime_error("CSCMatrix::Multiply: Dimension mismatch.");
 
     // columns of the input matrix
@@ -244,20 +262,21 @@ template void CCSCMatrix<float,int>::Multiply(CDenseVector<float>& out, const CD
 
 
 template<typename T, typename U>
-CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A) {
+CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A, T lambda) {
 
     CCSCMatrix<T,U> AtA(A.NCols(),A.NCols());
 
     // non-zero element counter
     size_t counter = 0;
+    T prod;
 
     // multiply col i of x with all other cols j>=i
     for(size_t i=0; i<A.NCols(); i++) {
 
         // this is one row
-        for(size_t j=i; j<A.NCols(); j++) {
+        for(size_t j=0; j<=i; j++) {
 
-            T prod = 0;
+            prod = 0;
             size_t k = A.m_colptr->at(i);
             size_t l = A.m_colptr->at(j);
 
@@ -265,25 +284,40 @@ CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A) {
             // x.m_colptr->at(j) -> x.m_colptr->at(j+1) picks range in x.m_vals
             // for cols i respectively j.
             // but overlap is determined by x.m_row
-            while(k!=A.m_colptr->at(i+1) && l!=A.m_colptr->at(j+1)) {
 
-                if(A.m_rows->at(k)==A.m_rows->at(l)) {
-                    prod += A.m_vals->at(k)*A.m_vals->at(l);
-                    k++;
-                    l++;
+            //if(A.m_rows->at(k)<=A.m_rows->at(A.m_colptr->at(j+1)-1) && A.m_rows->at(l)<=A.m_rows->at(A.m_colptr->at(i+1)-1)) {
+
+                while(true) {
+
+                    if (k==A.m_colptr->at(i+1) || l==A.m_colptr->at(j+1))
+                        break;
+
+                    if(A.m_rows->at(k)==A.m_rows->at(l)) {
+                        prod += A.m_vals->at(k)*A.m_vals->at(l);
+                        k++;
+                        l++;
+                    }
+                    else if(A.m_rows->at(k)<A.m_rows->at(l))
+                        k++;
+                    else
+                        l++;
+
                 }
-                else if(A.m_rows->at(k)<A.m_rows->at(l))
-                    k++;
-                else
-                    l++;
 
-            }
+                if(prod!=0) {
 
-            if(prod!=0) {
-                AtA.m_rows->push_back(j);
-                AtA.m_vals->push_back(prod);
-                counter++;
-            }
+                    AtA.m_rows->push_back(j);
+
+                    if(i==j)
+                        AtA.m_vals->push_back(prod+lambda);
+                    else
+                        AtA.m_vals->push_back(prod);
+
+                    counter++;
+
+                }
+
+            //}
 
         }
 
@@ -295,10 +329,29 @@ CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A) {
 
     }
 
-
     return AtA;
 
 }
+
+
+template<typename T, typename U>
+void CCSCMatrix<T,U>::SaveToFile(const char* filename) {
+
+    ofstream out(filename);
+
+    out << m_nrows << " " << m_ncols << endl;
+
+    // write m_ncols + 1 values
+    for(typename vector<U>::const_iterator it=m_colptr->begin(); it!=m_colptr->end(); ++it)
+        out << *it << endl;
+
+    for(size_t k=0; k<m_vals->size(); k++)
+        out << m_rows->at(k) << " " << m_vals->at(k) << endl;
+
+    out.close();
+
+}
+
 
 template class CCSCMatrix<float,size_t>;
 template class CCSCMatrix<double,size_t>;
@@ -312,9 +365,12 @@ CCholeskySolver<T>::CCholeskySolver(CCSCMatrix<T, int>& AtA):
 
     cholmod_start(&m_c);
     m_c.print = 5;
+    //m_c.default_nesdis = 1;
+    m_c.supernodal = CHOLMOD_SIMPLICIAL;
 
     // pre-analyze
     cholmod_sparse header = CCholeskySolver<T>::CreateSparseMatrixHeader(AtA);
+    cout << "CHOLMOD:Analyzing..." << endl;
     m_pattern = cholmod_analyze(&header,&m_c);
 
 }
@@ -333,10 +389,10 @@ cholmod_sparse CCholeskySolver<float>::CreateSparseMatrixHeader(CCSCMatrix<float
     cholmod_sparse header;
     header.nrow = M.NRows();
     header.ncol = M.NCols();
-    header.nzmax = 9;
-    header.p = M.GetColumnPointer();
-    header.i = M.GetRowIndices();
-    header.x = M.GetValues();
+    header.nzmax = M.NNz();
+    header.p = M.GetColumnPointer()->data();
+    header.i = M.GetRowIndices()->data();
+    header.x = M.GetValues()->data();
     header.stype = 1;                           // use upper triangular part only
     header.itype = CHOLMOD_INT;
     header.xtype = CHOLMOD_REAL;
@@ -354,10 +410,10 @@ cholmod_sparse CCholeskySolver<double>::CreateSparseMatrixHeader(CCSCMatrix<doub
     cholmod_sparse header;
     header.nrow = M.NRows();
     header.ncol = M.NCols();
-    header.nzmax = 9;
-    header.p = M.GetColumnPointer();
-    header.i = M.GetRowIndices();
-    header.x = M.GetValues();
+    header.nzmax = M.NNz();
+    header.p = M.GetColumnPointer()->data();
+    header.i = M.GetRowIndices()->data();
+    header.x = M.GetValues()->data();
     header.stype = 1;                           // use upper triangular part only
     header.itype = CHOLMOD_INT;
     header.xtype = CHOLMOD_REAL;
@@ -407,10 +463,10 @@ CDenseArray<T> CCholeskySolver<T>::Solve(CCSCMatrix<T,int>& AtA, CDenseArray<T>&
     cholmod_sparse AtAhdr = CCholeskySolver<T>::CreateSparseMatrixHeader(AtA);
     cholmod_dense AtBhdr = CCholeskySolver<T>::CreateDenseMatrixHeader(AtB);
 
-    cholmod_print_sparse(&AtAhdr,"A",&m_c);
-    cholmod_print_dense(&AtBhdr,"B",&m_c);
-
+    cout << "CHOLMOD:Factorizing..." << endl;
     cholmod_factorize(&AtAhdr,m_pattern,&m_c);
+
+    cout << "CHOLMOD:Solving by backsubstitution..." << endl;
     cholmod_dense* sol = cholmod_solve(CHOLMOD_A,m_pattern,&AtBhdr,&m_c);
 
     shared_ptr<T> pd(static_cast<T*>(sol->x));

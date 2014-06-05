@@ -1,8 +1,6 @@
 #ifndef TRIMESH_H_
 #define TRIMESH_H_
 
-#define COTAN_EPSILON 1e-10
-
 #include <set>
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
@@ -98,10 +96,13 @@ public:
     OpenMesh::HalfedgeHandle OppositeHalfedgeHandle(FaceHandle fh, VertexHandle vh);
 
     //! Computes the discrete gradient operator for vertex-based functions.
-    CCSCMatrix<float,int> ComputeGradientOperator();
+    CCSCMatrix<double,int> ComputeGradientOperator();
 
     //! Cotangent of the angle opposite to a half edge.
     float CotanOppositeAngle(HalfedgeHandle heh);
+
+    //! Save mesh to disk.
+    void SaveToFile(const char* filename);
 
 private:
 
@@ -120,6 +121,8 @@ private:
     //! Checks for an obtuse triangle.
     bool IsTriangleObtuse(FaceHandle fh);
 
+    //! Saves as VTK file.
+    void SaveAsVTK(const char* filename);
 
 };
 
