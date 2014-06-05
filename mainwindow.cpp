@@ -81,6 +81,7 @@ void MainWindow::on_actionReload_triggered() {
     for (f_it = m_mesh.faces_begin(); f_it != m_mesh.faces_end(); ++f_it)
         m_mesh.set_color(f_it,OpenMesh::Vec3uc(200,200,200));
 
+    m_viewer->updateBoundingBox();
     m_viewer->updateGL();
 
 }
@@ -142,9 +143,6 @@ void MainWindow::on_actionLoad_Mesh_triggered() {
     // everything else is the same as in reload
     on_actionReload_triggered();
 
-    // first load
-    m_viewer->updateBoundingBox();
-
 }
 
 void MainWindow::on_imgSpinBox_valueChanged(int arg1) {
@@ -153,7 +151,7 @@ void MainWindow::on_imgSpinBox_valueChanged(int arg1) {
 
         emit cameraChanged(m_imgs.at(arg1).GetCam());
         emit viewpointChanged(m_imgs.at(arg1).GetViewpoint());
-
+        cout << "bla" << endl;
     }
 
 
@@ -185,7 +183,7 @@ void MainWindow::on_stepButton_clicked() {
     CCSCMatrix<double,int> G = m_mesh.ComputeGradientOperator();
     t1 = chrono::high_resolution_clock::now();
     time_span = chrono::duration_cast<chrono::duration<double>>(t1 - t0);
-    cout << "Time assembly: " << time_span.count() << " seconds.";
+    cout << "Time assembly: " << time_span.count() << " seconds." << endl;
     G.SaveToFile("/home/jbalzer/G.txt");
     // compute right-hand side, but make sure that b accounts for normalization condition
     CDenseVector<double> b(G.NCols()+1);
@@ -196,7 +194,7 @@ void MainWindow::on_stepButton_clicked() {
     CCSCMatrix<double,int> GtG = CCSCMatrix<double,int>::Square(G);
     t1 = chrono::high_resolution_clock::now();
     time_span = chrono::duration_cast<chrono::duration<double>>(t1 - t0);
-    cout << "Time squaring: " << time_span.count() << " seconds.";
+    cout << "Time squaring: " << time_span.count() << " seconds."  << endl;
 
 
     GtG.Resize(m_mesh.n_vertices()+1,m_mesh.n_vertices()+1);
@@ -304,35 +302,6 @@ double MainWindow::computeResidual(CDenseVector<double>& r) {
 
 }
 
-
-void MainWindow::on_refineButton_clicked() {
-
-    m_mesh.UniformMeshRefinement(1);
-
-    // set default vertex/face color
-    TriangleMesh::FaceIter f_it;
-    for (f_it = m_mesh.faces_begin(); f_it != m_mesh.faces_end(); ++f_it)
-        m_mesh.set_color(f_it,OpenMesh::Vec3uc(200,200,200));
-
-
-    m_mesh.update_normals();
-    m_viewer->updateGL();
-
-}
-
-void MainWindow::on_edgeButton_clicked() {
-
-    // clean
-    m_mesh.EdgeCollapse(ui->edgeEdit->text().toDouble());
-
-    // update normals
-    m_mesh.update_normals();
-
-    // redraw
-    m_viewer->updateGL();
-
-}
-
 void MainWindow::on_actionSave_Mesh_triggered() {
 
     QString type; // = 0
@@ -366,5 +335,41 @@ void MainWindow::on_actionError_triggered() {
     ss << "Total error: " << total_error;
     ui->statusBar->showMessage(ss.str().c_str());
     m_viewer->updateGL();
+
+}
+
+void MainWindow::on_actionRefine_triggered() {
+
+    m_mesh.UniformMeshRefinement(1);
+
+    // set default vertex/face color
+    TriangleMesh::FaceIter f_it;
+    for (f_it = m_mesh.faces_begin(); f_it != m_mesh.faces_end(); ++f_it)
+        m_mesh.set_color(f_it,OpenMesh::Vec3uc(200,200,200));
+
+
+    m_mesh.update_normals();
+    m_viewer->updateGL();
+
+}
+
+void MainWindow::on_actionSave_Image_triggered() {
+
+    if(m_imgs.size()==0)
+        return;
+
+    CFlowVisualization<float> vis;
+    QImage img = vis.CalcDirectionEncoding(m_imgs.at(ui->imgSpinBox->value()));
+
+    QString type;
+    QString filename = QFileDialog::getSaveFileName(this, tr("Export mesh..."),
+                                                    ".",
+                                                    tr("*.png;;*.jpg"),
+                                                    &type);
+
+    if(!filename.endsWith(".png") && !filename.endsWith(".jpg"))
+        filename += type.remove(0,1);
+
+    img.save(filename);
 
 }

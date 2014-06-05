@@ -285,12 +285,9 @@ CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A, T lambda) {
             // for cols i respectively j.
             // but overlap is determined by x.m_row
 
-            //if(A.m_rows->at(k)<=A.m_rows->at(A.m_colptr->at(j+1)-1) && A.m_rows->at(l)<=A.m_rows->at(A.m_colptr->at(i+1)-1)) {
+            if(A.m_rows->at(k)<=A.m_rows->at(A.m_colptr->at(j+1)-1) && A.m_rows->at(l)<=A.m_rows->at(A.m_colptr->at(i+1)-1)) {
 
                 while(true) {
-
-                    if (k==A.m_colptr->at(i+1) || l==A.m_colptr->at(j+1))
-                        break;
 
                     if(A.m_rows->at(k)==A.m_rows->at(l)) {
                         prod += A.m_vals->at(k)*A.m_vals->at(l);
@@ -301,6 +298,9 @@ CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A, T lambda) {
                         k++;
                     else
                         l++;
+
+                    if (k==A.m_colptr->at(i+1) || l==A.m_colptr->at(j+1))
+                        break;
 
                 }
 
@@ -317,7 +317,9 @@ CCSCMatrix<T,U> CCSCMatrix<T,U>::Square(const CCSCMatrix<T,U>& A, T lambda) {
 
                 }
 
-            //}
+
+
+            }
 
         }
 

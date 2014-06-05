@@ -11,7 +11,7 @@ CViewer::CViewer(QWidget* parent):
     QGLWidget(parent),
     m_cam(),
     m_viewpoint(),
-    m_znear(0.0001),
+    m_znear(0.1),
     m_zfar(50.0),
     m_last_point(),
     m_center(),
@@ -69,8 +69,30 @@ void CViewer::loadProjectionMatrix() {
     // get camera intrinsics
     matf K = m_cam.GetOpenGLProjectionMatrix(m_znear,m_zfar);
 
+    float mp[16];
+
+    // dense matrix stores in row-major order now!!!
+    mp[0] = K.Get(0,0);
+    mp[1] = K.Get(1,0);
+    mp[2] = K.Get(2,0);
+    mp[3] = K.Get(3,0);
+    mp[4] = K.Get(0,1);
+    mp[5] = K.Get(1,1);
+    mp[6] = K.Get(3,1);
+    mp[7] = K.Get(3,1);
+    mp[8] = K.Get(0,2);
+    mp[9] = K.Get(1,2);
+    mp[10] = K.Get(2,2);
+    mp[11] = K.Get(3,2);
+    mp[12] = K.Get(0,3);
+    mp[13] = K.Get(1,3);
+    mp[14] = K.Get(2,3);
+    mp[15] = K.Get(3,3);
+
     glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(K.Data().get());
+    glLoadMatrixf(&mp[0]);
+
+    //glLoadMatrixf(K.Data().get());
 
 }
 
@@ -79,22 +101,24 @@ void CViewer::loadView(const CRigidMotion<float,3>& viewpoint) {
     matf F = matf(viewpoint);
 
     float mv[16];
-    mv[0] = F.Data().get()[0];
-    mv[1] = -F.Data().get()[1];
-    mv[2] = -F.Data().get()[2];
-    mv[3] = F.Data().get()[3];
-    mv[4] = F.Data().get()[4];
-    mv[5] = -F.Data().get()[5];
-    mv[6] = -F.Data().get()[6];
-    mv[7] = F.Data().get()[7];
-    mv[8] = F.Data().get()[8];
-    mv[9] = -F.Data().get()[9];
-    mv[10] = -F.Data().get()[10];
-    mv[11] = F.Data().get()[11];
-    mv[12] = F.Data().get()[12];
-    mv[13] = -F.Data().get()[13];
-    mv[14] = -F.Data().get()[14];
-    mv[15] = F.Data().get()[15];
+
+    // dense matrix stores in row-major order!!!
+    mv[0] = F.Get(0,0);
+    mv[1] = -F.Get(1,0);
+    mv[2] = -F.Get(2,0);
+    mv[3] = F.Get(3,0);
+    mv[4] = F.Get(0,1);
+    mv[5] = -F.Get(1,1);
+    mv[6] = -F.Get(2,1);
+    mv[7] = F.Get(3,1);
+    mv[8] = F.Get(0,2);
+    mv[9] = -F.Get(1,2);
+    mv[10] = -F.Get(2,2);
+    mv[11] = F.Get(3,2);
+    mv[12] = F.Get(0,3);
+    mv[13] = -F.Get(1,3);
+    mv[14] = -F.Get(2,3);
+    mv[15] = F.Get(3,3);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(&mv[0]);
@@ -361,15 +385,6 @@ CTriMeshViewer::CTriMeshViewer(const CCamera<float>& cam, const CTriangleMesh* m
 
 }
 
-void CTriMeshViewer::setMesh(const CTriangleMesh *mesh) {
-
-    m_mesh = mesh;
-
-    // update bounding box
-    this->updateBoundingBox();
-
-}
-
 void CTriMeshViewer::updateBoundingBox() {
 
     if(m_mesh==nullptr)
@@ -452,7 +467,6 @@ void CTriMeshViewer::mouseReleaseEvent(QMouseEvent *event) {
     // update clip depths only after change is done
     this->updateClipDepth(m_viewpoint.GetTransformation(),NEAR_PLANE_TOL);
     this->updateGL();
-
     event->accept();
 
 }

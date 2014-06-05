@@ -59,12 +59,6 @@ private slots:
     //! Carry out one step of the integration algorithm.
     void on_stepButton_clicked();
 
-    //! Uniform mesh refinement.
-    void on_refineButton_clicked();
-
-    //! Collapse edges to reduce the amount of obtuse triangles.
-    void on_edgeButton_clicked();
-
     //! Save deformed mesh to disk.
     void on_actionSave_Mesh_triggered();
 
@@ -73,6 +67,11 @@ private slots:
 
     //! Show a visualization of the normal field.
     void showNormalFieldImage(int no);
+
+    //! Uniform mesh refinement.
+    void on_actionRefine_triggered();
+
+    void on_actionSave_Image_triggered();
 
 private:
 

@@ -63,7 +63,7 @@ protected:
 
 protected:
 
-    CCamera<float> m_cam;              //!< intrinsic camera parameters
+    CCamera<float> m_cam;                  //!< intrinsic camera parameters
     CViewPoint<float> m_viewpoint;         //!< vantage point
     float m_znear;                         //!< near clipping plane
     float m_zfar;                          //!< far clipping plane
@@ -94,9 +94,6 @@ public:
     //! Constructor.
     explicit CTriMeshViewer(const CCamera<float>& cam, const CTriangleMesh* mesh = nullptr, QWidget* parent = nullptr);
 
-    //! Updates mesh and recompute its bounding box.
-    void setMesh(const CTriangleMesh* mesh);
-
     /*! \brief Triggers update of bounding box without changing the pointer to the mesh.
      *
      * This comes in handy e.g. when new polygons are added to the mesh or the mesh is deformed.
@@ -122,7 +119,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event);
 
     //! Update clip depth based on the bounding box approximation of the current mesh.
-    void updateClipDepth(const CRigidMotion<float,3>& F, float tolerance = 1.1);
+    void updateClipDepth(const CRigidMotion<float,3>& F, float tolerance = 1.0);
 
 private:
 
