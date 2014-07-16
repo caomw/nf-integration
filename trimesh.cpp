@@ -503,6 +503,7 @@ void CTriangleMesh::DeleteFaces(set<FaceHandle> faces) {
 	release_halfedge_status();
 	release_face_status();
 
+
 }
 
 void CTriangleMesh::Disturb(float mu, float sigma) {
@@ -567,7 +568,7 @@ void CTriangleMesh::SimpleSmooth(u_int n, bool boundary) {
 CCSCMatrix<double, int> CTriangleMesh::ComputeGradientOperator() {
 
     vector<CCSCTriple<double,int> > entries;
-
+    entries.reserve(10*this->n_faces());
     // row pointer
     size_t row = 0;
 
@@ -611,6 +612,45 @@ CCSCMatrix<double, int> CTriangleMesh::ComputeGradientOperator() {
 
 }
 
+CCSCMatrix<double, int> CTriangleMesh::ComputeLaplaceBeltramiOperator() {
+
+    vector<CCSCTriple<double,int> > entries;
+    entries.reserve(10*this->n_vertices());
+
+    TriangleMesh::VertexIter v_it, v_end(this->vertices_end());
+    TriangleMesh::VertexOHalfedgeIter voh_it;
+
+    size_t  rowptr = 0;
+
+    for (v_it = this->vertices_begin(); v_it != v_end; ++v_it) {
+
+         size_t j0 = v_it.handle().idx();
+
+         double w0 = 0;
+
+         for (voh_it = this->voh_iter(v_it); voh_it; ++voh_it) {
+
+             size_t j1 = this->to_vertex_handle(voh_it.handle()).idx();
+
+             double weight = this->CotanOppositeAngle(voh_it.handle())
+                             + this->CotanOppositeAngle(this->opposite_halfedge_handle(voh_it.handle()));
+
+             if(weight>ZERO_TOL) {
+                w0 += 0.5*weight;
+                entries.push_back(CCSCTriple<double,int>(rowptr,j1,-0.5*weight));
+             }
+
+        }
+
+        entries.push_back(CCSCTriple<double,int>(rowptr,j0,w0));
+
+        rowptr++;
+
+    }
+
+    return CCSCMatrix<double,int>(this->n_vertices(),this->n_vertices(),entries);
+
+}
 
 
 vec3f CTriangleMesh::Point(VertexHandle vh) const {

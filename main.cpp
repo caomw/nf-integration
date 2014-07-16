@@ -7,14 +7,6 @@
 
 using namespace std;
 
-// Visualization of field in main window -> flow class from server!, save image!!
-//
-//
-//
-//
-//
-
-
 
 int main(int argc, char *argv[]) {
 

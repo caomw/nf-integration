@@ -83,3 +83,8 @@ unix:!symbian|win32 {
     LIBS += -lcholmod
 
 }
+
+OTHER_FILES +=
+
+RESOURCES += \
+    icon.qrc

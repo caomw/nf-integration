@@ -1,9 +1,9 @@
 #include <iostream>
+#include <QFileDialog>
 
 #include "viewer.h"
 
-#define NEAR_PLANE_TOL 0.5
-#define FAR_PLANE_TOL 1.5
+#define NEAR_PLANE_TOL 0.9999
 
 using namespace std;
 
@@ -92,14 +92,11 @@ void CViewer::loadProjectionMatrix() {
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(&mp[0]);
 
-    //glLoadMatrixf(K.Data().get());
-
 }
 
 void CViewer::loadView(const CRigidMotion<float,3>& viewpoint) {
 
     matf F = matf(viewpoint);
-
     float mv[16];
 
     // dense matrix stores in row-major order!!!
@@ -171,6 +168,10 @@ void CViewer::initializeGL(){
 
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
+
+    //int zbuffer_depth;
+    //glGetIntegerv(GL_DEPTH_BITS, &zbuffer_depth);
+    //cout << "Buffer depth: " << zbuffer_depth << endl;
 
 }
 
@@ -326,18 +327,37 @@ void CViewer::keyPressEvent(QKeyEvent* event) {
 
     }
 
+    // save screenshot
+    if(event->key() == Qt::Key_S) {
+
+        QString filename = QFileDialog::getSaveFileName(this, tr("Export screenshot..."),
+                                                        ".",
+                                                        tr("(*.png)"));
+
+        QImage img = this->grabFrameBuffer();
+        img.save(filename);
+
+    }
+
+
 }
 
 CDenseArray<float> CViewer::getDepthMap(const CRigidMotion<float,3>& viewpoint) {
 
     // load view and paint
     this->loadView(viewpoint);
-    this->updateClipDepth(viewpoint,1.0);
+    this->updateClipDepth(viewpoint,NEAR_PLANE_TOL);
     this->paintGL();
 
     // allocate result
     QSize ws = this->size();
     matf z(ws.height(),ws.width());
+
+    cout << viewpoint << endl;
+    //cout << "Bounding box: " << endl;
+    //cout << m_bbox.Lower() << " " << m_bbox.Upper() << endl;
+    //cout << "Clip depths: " << endl;
+    //cout << m_znear << " " << m_zfar << endl;
 
     // we need buffer in order to flip the array
     float* buffer = new float[z.NElems()];

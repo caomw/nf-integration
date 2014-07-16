@@ -98,6 +98,14 @@ public:
     //! Computes the discrete gradient operator for vertex-based functions.
     CCSCMatrix<double,int> ComputeGradientOperator();
 
+    /*! \brief Computes the discrete Laplace-Beltrami operator.
+     *
+     * \details This is much somehow much faster than squaring the
+     * discrete gradient operator.
+     *
+     */
+    CCSCMatrix<double,int> ComputeLaplaceBeltramiOperator();
+
     //! Cotangent of the angle opposite to a half edge.
     float CotanOppositeAngle(HalfedgeHandle heh);
 

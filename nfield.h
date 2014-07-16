@@ -69,18 +69,22 @@ public:
     void ReadFromFile(const char* filename);
 
     //! Project to image and compute value using bilinear interpolation.
-    CVector<T,3> Get(const CVector<T,3>& x);
+    CVector<T,3> Get(const CVector<T,3>& x) const;
+
+    //! Get mask.
+    uint GetMask(const CVector<T,3>& x) const;
 
     //! Get scene point and compute deflectometric normal.
-    CVector<T,3> GetDeflectometricNormal(const CVector<T,3>& x);
+    CVector<T,3> GetDeflectometricNormal(const CVector<T,3>& x) const;
 
     //! Access to camera.
-    const CCamera<T>& GetCam() { return m_cam; }
+    const CCamera<T>& GetCam() const { return m_cam; }
 
     //! Access to vantage point.
-    const CViewPoint<T>& GetViewpoint() { return m_viewpoint; }
+    const CViewPoint<T>& GetViewpoint() const { return m_viewpoint; }
 
-protected:
+protected:// first compute visibility
+
 
     CCamera<T> m_cam;
     CViewPoint<T> m_viewpoint;

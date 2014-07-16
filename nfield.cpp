@@ -156,7 +156,7 @@ void CNormalField<float>::ReadFromFile(const char* filename) {
 }
 
 template<typename T>
-CVector<T,3> CNormalField<T>::Get(const CVector<T,3>& x) {
+CVector<T,3> CNormalField<T>::Get(const CVector<T,3>& x) const {
 
     CVector<T,3> xc = m_viewpoint.GetTransformation().Transform(x);
     CVector<T,2> xp = m_cam.Project(xc);
@@ -165,24 +165,55 @@ CVector<T,3> CNormalField<T>::Get(const CVector<T,3>& x) {
 }
 
 template<typename T>
-CVector<T,3> CNormalField<T>::GetDeflectometricNormal(const CVector<T,3>& x) {
+uint CNormalField<T>::GetMask(const CVector<T,3>& x) const {
+
+    CVector<T,3> xc = m_viewpoint.GetTransformation().Transform(x);
+    CVector<T,2> xp = m_cam.Project(xc);
+
+    int u = int(xp.Get(0)+0.5);
+    int v = int(xp.Get(1)+0.5);
+
+    if(v>=0 && v<m_mask.NRows() && u>=0 && u<m_mask.NCols())
+        return m_mask.Get(v,u);
+    else
+        return 0;
+
+}
+
+
+template<typename T>
+CVector<T,3> CNormalField<T>::GetDeflectometricNormal(const CVector<T,3>& x) const {
 
     CVector<T,3> o = m_viewpoint.GetLocation();
-    CVector<T,3> l = this->Get(x);
 
-    CVector<T,3> s = x - o;
-    CVector<T,3> r = x - l;
+    // transform to local coordinates
+    CVector<T,3> xl = m_viewpoint.GetTransformation().Transform(x);
 
-    s.Normalize();
-    r.Normalize();
-    CVector<T,3> n = s + r;
+    // project
+    CVector<T,2> xp = m_cam.Project(xl);
 
-    if(InnerProduct(n,s)<0.1)
-        n = 0.0*n;
-    else
-        n = (-1.0)*n;
+    // check whether the pixel is valid
+    if(xp.Get(0)>=0 && xp.Get(1)>=0 && xp.Get(0)<m_mask.NCols() && xp.Get(1)<m_mask.NRows()
+       && m_mask.Get(size_t(xp.Get(1)),size_t(xp.Get(0)))>=200) {
 
-    return n;
+        CVector<T,3> l = m_raw_data.Get(xp);
+
+        CVector<T,3> s = x - o;
+        CVector<T,3> r = x - l;
+
+        s.Normalize();
+        r.Normalize();
+        CVector<T,3> n = s + r;
+
+        if(InnerProduct(n,s)<0.1)
+            n = 0.0*n;
+        else
+            n = (-1.0)*n;
+
+        return n;
+    }
+     else
+        return CVector<T,3>();
 
 }
 

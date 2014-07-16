@@ -80,8 +80,8 @@ CDenseArray<T> CCamera<T>::GetOpenGLProjectionMatrix(T znear, T zfar) const {
 
     CDenseArray<T> P(4,4);
 
-    // FIXME: we also have an orthographic  cam in OpenGL
-    //if(!m_orthographic) {
+    if(!m_orthographic) {
+
         P(0,0) = 2.0*m_f[0] / T(m_size[0]);
         P(0,2) = 2.0*(m_c[0]/ T(m_size[0])) - 1.0;
         P(1,1) = 2.0*m_f[1] /  T(m_size[1]);
@@ -89,7 +89,19 @@ CDenseArray<T> CCamera<T>::GetOpenGLProjectionMatrix(T znear, T zfar) const {
         P(2,2) = (-zfar - znear)/(zfar - znear);
         P(2,3) = -2*zfar*znear/(zfar - znear);
         P(3,2) = -1.0;
-    //}
+
+    }
+    else {
+
+        P(0,0) = 2.0*m_f[0] / T(m_size[0]);
+        P(0,3) = -2.0*(m_c[0]/ T(m_size[0])) + 1.0;
+        P(1,1) = 2.0*m_f[1] /  T(m_size[1]);
+        P(1,2) = -2.0*(m_c[1]/  T(m_size[1])) + 1.0;
+        P(2,3) = (-zfar - znear)/(zfar - znear);
+        P(2,2) = -2/(zfar - znear);
+        P(3,3) = 1.0;
+
+    }
 
     return P;
 

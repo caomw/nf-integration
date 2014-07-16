@@ -71,12 +71,28 @@ private slots:
     //! Uniform mesh refinement.
     void on_actionRefine_triggered();
 
+    //! Save visualization of normal field to disk.
     void on_actionSave_Image_triggered();
 
-private:
+    //! Visualize the region on the surface visible by the current view.
+    void on_actionVisibility_triggered();
+
+    //! Close the current view.
+    void on_actionClose_Current_triggered();
+
+    //! Apply one step of Laplacian smoothinh to mesh.
+    void on_actionSmooth_triggered();
+
+    //! Compute the views in which a face is visible.
+    void computeVisibility(OpenMesh::FPropHandleT<std::set<uint> > views);
 
     //! Compute normal residual.
     double computeResidual(CDenseVector<double>& r);
+
+    //! Delete parts of the mesh for which the mask is equal to zero.
+    void on_actionCrop_triggered();
+
+private:
 
     Ui::MainWindow* ui;                                //! the GUI
     std::vector<CNormalField<float> > m_imgs;          //! multi-view normal field
