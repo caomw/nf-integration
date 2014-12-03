@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
 
-SUBDIRS = integrator \
-    unittests \
-    libcore
+SUBDIRS = libcore \
+          integrator \
+          unittests
