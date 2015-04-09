@@ -1,10 +1,6 @@
 # README #
 
-## Premise ##
-
-The purpose of this software is to optimize a given starting mesh to 
-
-## Building ##
+## Build instructions ##
 
 ### Dependencies ###
 
@@ -20,11 +16,5 @@ of your Linux distribution. OpenMesh has to be downloaded from the given web sit
 and compiled from source. The build process utilizes CMake and present no major
 difficulties.
 
-### QMake Build ###
 
 
-## Basic usage ##
-
-### Data I/O ###
-
-### Utilities ###
