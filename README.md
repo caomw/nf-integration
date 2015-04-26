@@ -1,5 +1,3 @@
-# Normal Field Integration by Second-order Shape Optimization #
-
 ## Introduction
 
 Details on the underlying theory can be found in
