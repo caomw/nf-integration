@@ -1,4 +1,12 @@
-# README #
+# Normal Field Integration by Second-order Shape Optimization #
+
+## Introduction
+
+Details on the underlying theory can be found in
+
+> J. Balzer, S. Soatto: Second-order Shape Optimization for Geometric Inverse Problems in Vision, IEEE CVPR, 2014.
+
+A preprint is available [here](http://arxiv.org/abs/1311.2626). Please cite if you use the software in your own published work.
 
 ## Build instructions ##
 
