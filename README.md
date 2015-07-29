@@ -19,7 +19,7 @@ Make sure the following library a installed on your machine.
 
 CHOLMOD, OpenEXR, and QT can typically be installed through the package manager
 of your Linux distribution. OpenMesh has to be downloaded from the given web site
-and compiled from source. The build process utilizes CMake and present no major
+and compiled from source. The build process utilizes CMake and presents no major
 difficulties.
 
 
